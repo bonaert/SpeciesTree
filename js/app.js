@@ -67,75 +67,27 @@ function openSpeciesWindow(nodeId) {
     }
 }
 
+function expandSubtree(s, fatherID) {
+    getChildrenIDs(fatherID, function (childrenIDs) {
+        updateGraphWithChildren(s, fatherID, childrenIDs);
+    });
+}
+
 function updateGraphWithChildren(sig, fatherID, childrenIDs) {
     var div = document.getElementById('divID');
     div.innerHTML = div.innerHTML + JSON.stringify(childrenIDs);
     addRootNodeWithChildrenConnected(sig, fatherID, childrenIDs);
 }
 
-var div = document.getElementById('divID');
-var s = new sigma({
-    container: 'dataContainer',
-    sideMargin: 00
-});
-
-s.bind('clickNode', function (e) {
-    var nodeID = e.data.node.id;
-    //openSpeciesWindow(nodeID);
-    getChildrenIDs(nodeID, function (ids) {
-        updateGraphWithChildren(s, nodeID, ids);
-    });
-
-});
-
-s.graph.addNode({
-    // Main attributes:
-    id: 'n0',
-    label: 'Life',
-    // Display attributes:
-    x: 4.5,
-    y: 1,
-    size: 8,
-    color: '#09c614'
-});
-
-
-
-species = [1, 2, 3, 4, 5, 6, 7, 8]
-urls = getAllUrls(species);
-getAllData(urls, function (specie) {
-    div.innerHTML = div.innerHTML + '<br>' + specie['scientificName'] + '<br>';
-    var id = specie['key'].toString();
-    s.graph.addNode({
-        id: id,
-        label: specie['scientificName'],
-        size: 8,
-        x: id,
-        y: 3,
-        color: '#09c614'
-    });
-
-    s.graph.addEdge({
-        id: 'n0-' + id,
-        source: 'n0',
-        target: id
-    });
-
-    console.log(s.graph.nodes(id));
-    div.innerHTML = div.innerHTML + JSON.stringify(s.graph.nodes(id));
-
-    // Finally, let's ask our sigma instance to refresh:
-    s.refresh();
-});
-
 function addRootNodeWithChildrenConnected(sig, rootID, childrenID) {
-
     var graph = sig.graph;
     var root = graph.nodes(rootID);
     var scientificName = root['label'];
     console.log(root);
 
     graph.clear();
+
+    // Add root node
     graph.addNode({
         id: rootID,
         label: scientificName,
@@ -146,9 +98,14 @@ function addRootNodeWithChildrenConnected(sig, rootID, childrenID) {
     });
 
     var urls = getAllUrls(childrenID);
+
     getAllData(urls, function (child) {
+
         div.innerHTML = div.innerHTML + '<br>' + child['scientificName'] + '<br>';
+
         var childID = child['key'].toString();
+
+        // Add child node
         graph.addNode({
             id: childID,
             label: child['scientificName'],
@@ -158,6 +115,7 @@ function addRootNodeWithChildrenConnected(sig, rootID, childrenID) {
             color: '#09c614'
         });
 
+        // Add edge between root and child
         graph.addEdge({
             id: rootID + '-' + childID,
             source: rootID,
@@ -165,6 +123,68 @@ function addRootNodeWithChildrenConnected(sig, rootID, childrenID) {
         });
 
         // Finally, let's ask our sigma instance to refresh:
+        // This will lead to a refresh each time a new node is added, which may
+        // be excessive. Must measure, and then find if it's necessary to optimize by
+        // adding everything, and, at the end, refresh the graph (once for the whole process)
         s.refresh();
     });
 }
+
+function buildInitialGraph() {
+    var div = document.getElementById('divID');
+    var s = new sigma({
+        container: 'dataContainer',
+        sideMargin: 00
+    });
+
+    s.bind('clickNode', function (e) {
+        var nodeID = e.data.node.id;
+        //openSpeciesWindow(nodeID);
+        expandSubtree(s, nodeID);
+    });
+
+    s.graph.addNode({
+        // Main attributes:
+        id: 'n0',
+        label: 'Life',
+        // Display attributes:
+        x: 4.5,
+        y: 1,
+        size: 8,
+        color: '#09c614'
+    });
+
+
+
+    species = [1, 2, 3, 4, 5, 6, 7, 8]
+    urls = getAllUrls(species);
+    getAllData(urls, function (specie) {
+        div.innerHTML = div.innerHTML + '<br>' + specie['scientificName'] + '<br>';
+        var id = specie['key'].toString();
+        s.graph.addNode({
+            id: id,
+            label: specie['scientificName'],
+            size: 8,
+            x: id,
+            y: 3,
+            color: '#09c614'
+        });
+
+        s.graph.addEdge({
+            id: 'n0-' + id,
+            source: 'n0',
+            target: id
+        });
+
+        console.log(s.graph.nodes(id));
+        div.innerHTML = div.innerHTML + JSON.stringify(s.graph.nodes(id));
+
+        // Finally, let's ask our sigma instance to refresh:
+        s.refresh();
+    });
+
+    return s;
+}
+
+var s = buildInitialGraph();
+var div = document.getElementById('divID');
