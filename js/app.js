@@ -23,10 +23,10 @@ function fetchData(url, processData) {
 }
 
 function getAllUrls(species) {
-    searchUrl = "http://api.gbif.org/v0.9/species/";
+    var searchUrl = "http://api.gbif.org/v0.9/species/";
     var urls = [];
     for (var i = 0; i < species.length; i++) {
-        url = encodeURI(searchUrl + species[i]);
+        var url = encodeURI(searchUrl + species[i]);
         urls.push(url)
     }
     return urls;
@@ -35,7 +35,7 @@ function getAllUrls(species) {
 function getAllData(urls, callback) {
     for (var i = 0; i < urls.length; i++) {
         fetchData(urls[i], function (response) {
-            parsedData = JSON.parse(response);
+            var parsedData = JSON.parse(response);
             callback(parsedData);
         });
     }
@@ -43,7 +43,7 @@ function getAllData(urls, callback) {
 
 function getChildrenIDs(nodeID, callback) {
     var url = "http://api.gbif.org/v0.9/species/"
-    var completeUrl = url + id + '/children';
+    var completeUrl = url + nodeID + '/children';
     fetchData(completeUrl, function (data) {
         var ids = []
         var parsedData = JSON.parse(data);
@@ -67,9 +67,10 @@ function openSpeciesWindow(nodeId) {
     }
 }
 
-function updateGraphWithChildren(fatherID, childrenIDs) {
+function updateGraphWithChildren(sig, fatherID, childrenIDs) {
     var div = document.getElementById('divID');
     div.innerHTML = div.innerHTML + JSON.stringify(childrenIDs);
+    addRootNodeWithChildrenConnected(sig, fatherID, childrenIDs);
 }
 
 var div = document.getElementById('divID');
@@ -80,9 +81,9 @@ var s = new sigma({
 
 s.bind('clickNode', function (e) {
     var nodeID = e.data.node.id;
-    openSpeciesWindow(nodeID);
+    //openSpeciesWindow(nodeID);
     getChildrenIDs(nodeID, function (ids) {
-        updateGraphWithChildren(nodeID, ids);
+        updateGraphWithChildren(s, nodeID, ids);
     });
 
 });
@@ -102,9 +103,9 @@ s.graph.addNode({
 
 species = [1, 2, 3, 4, 5, 6, 7, 8]
 urls = getAllUrls(species);
-data = getAllData(urls, function (specie) {
+getAllData(urls, function (specie) {
     div.innerHTML = div.innerHTML + '<br>' + specie['scientificName'] + '<br>';
-    id = specie['key'].toString();
+    var id = specie['key'].toString();
     s.graph.addNode({
         id: id,
         label: specie['scientificName'],
@@ -120,6 +121,50 @@ data = getAllData(urls, function (specie) {
         target: id
     });
 
+    console.log(s.graph.nodes(id));
+    div.innerHTML = div.innerHTML + JSON.stringify(s.graph.nodes(id));
+
     // Finally, let's ask our sigma instance to refresh:
     s.refresh();
 });
+
+function addRootNodeWithChildrenConnected(sig, rootID, childrenID) {
+
+    var graph = sig.graph;
+    var root = graph.nodes(rootID);
+    var scientificName = root['label'];
+    console.log(root);
+
+    graph.clear();
+    graph.addNode({
+        id: rootID,
+        label: scientificName,
+        size: 8,
+        x: childrenID.length / 2,
+        y: 1,
+        color: '#09c614'
+    });
+
+    var urls = getAllUrls(childrenID);
+    getAllData(urls, function (child) {
+        div.innerHTML = div.innerHTML + '<br>' + child['scientificName'] + '<br>';
+        var childID = child['key'].toString();
+        graph.addNode({
+            id: childID,
+            label: child['scientificName'],
+            size: 8,
+            x: graph.nodes().length,
+            y: 15,
+            color: '#09c614'
+        });
+
+        graph.addEdge({
+            id: rootID + '-' + childID,
+            source: rootID,
+            target: childID
+        });
+
+        // Finally, let's ask our sigma instance to refresh:
+        s.refresh();
+    });
+}
