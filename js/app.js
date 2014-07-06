@@ -41,10 +41,52 @@ function getAllData(urls, callback) {
     }
 }
 
+function getChildrenIDs(nodeID, callback) {
+    var url = "http://api.gbif.org/v0.9/species/"
+    var completeUrl = url + id + '/children';
+    fetchData(completeUrl, function (data) {
+        var ids = []
+        var parsedData = JSON.parse(data);
+        var results = parsedData['results'];
+        for (var i = 0; i < results.length; i++) {
+            var id = results[i]["key"];
+            ids.push(id);
+        }
+        callback(ids);
+    });
+}
+
+function openSpeciesWindow(nodeId) {
+    var win = window.open('http://www.gbif.org/species/' + nodeId.toString(), '_blank');
+    if (win) {
+        //Browser has allowed it to be opened
+        win.focus();
+    } else {
+        //Broswer has blocked it
+        alert('Please allow popups for this site');
+    }
+}
+
+function updateGraphWithChildren(fatherID, childrenIDs) {
+    var div = document.getElementById('divID');
+    div.innerHTML = div.innerHTML + JSON.stringify(childrenIDs);
+}
+
+var div = document.getElementById('divID');
 var s = new sigma({
     container: 'dataContainer',
     sideMargin: 00
 });
+
+s.bind('clickNode', function (e) {
+    var nodeID = e.data.node.id;
+    openSpeciesWindow(nodeID);
+    getChildrenIDs(nodeID, function (ids) {
+        updateGraphWithChildren(nodeID, ids);
+    });
+
+});
+
 s.graph.addNode({
     // Main attributes:
     id: 'n0',
@@ -56,7 +98,7 @@ s.graph.addNode({
     color: '#09c614'
 });
 
-var div = document.getElementById('divID');
+
 
 species = [1, 2, 3, 4, 5, 6, 7, 8]
 urls = getAllUrls(species);
@@ -81,62 +123,3 @@ data = getAllData(urls, function (specie) {
     // Finally, let's ask our sigma instance to refresh:
     s.refresh();
 });
-
-
-
-
-
-function parseData(jsonPath) {
-    sigma.parsers.json(jsonPath, {
-        container: 'dataContainer',
-        settings: {
-            defaultNodeColor: '#d9443c'
-        }
-    });
-}
-
-//parseData('../data/data.json');
-
-//var url = "http://api.gbif.org/v0.9/species/5231190"
-//fetchData(url, processData);
-//url = "http://api.gbif.org/v0.9/species/6"
-//fetchData(url, processData);
-
-
-
-
-
-//var request = createCORSRequest("get", );
-//if (request) {
-//   request.onload = function () {
-
-//   };
-//request.onreadystatechange = handler;
-//   request.send();
-//}
-
-var base = {
-    "root": [
-    "Animalia",
-    "Archeaea",
-    "Bacteria",
-    "Chromista",
-    "Fungi",
-    "Plantae",
-    "Protozoa",
-    "Viruses"
-    ]
-}
-
-var baseUrl = "http://www.catalogueoflife.org/col/webservice?name=";
-
-function httpGet(theUrl) {
-    var xmlHttp = null;
-
-    xmlHttp = new XMLHttpRequest();
-    xmlHttp.open("GET", theUrl, false);
-    xmlHttp.send(null);
-    return xmlHttp.responseText;
-}
-
-//data = httpGet(baseUrl + base["root"][0]);
