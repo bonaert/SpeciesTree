@@ -1,9 +1,13 @@
 function Tree() {
+    var self = this;
     this.levels = ['kingdom', 'phylum', 'order', 'family', 'genus', 'species'];
     this.level = 0;
 
     this.rootID = 0;
-    this.root = this._buildTreeRoot();
+    this.root = {
+        'key': 0,
+        'scientificName': 'Life'
+    };
 
     this.children = {};
     this.childrenIDs = [];
@@ -13,40 +17,46 @@ function Tree() {
             'key': 0,
             'scientificName': 'Life'
         };
-    }
+    };
 
     this.getRootID = function () {
         return this.rootID;
-    }
+    };
 
     this.getRoot = function () {
         return this.root;
-    }
+    };
+
+    this.getNumChildren = function () {
+        return this.childrenIDs.length;
+    };
 
     this.setRootToChild = function (childID) {
         this.rootID = childID;
         this.root = this.children[childID];
         this.children = {};
         this.childrenID = {};
-    }
+    };
 
     this.fetchChildren = function (callback) {
         this._fetchChildrenIDs(function (childrenIDs) {
-            this.childrenIDs = childrenIDs;
-            this._fetchChildrenData(callback);
+            self.childrenIDs = childrenIDs;
+            self._fetchChildrenData(callback);
         });
-    }
+    };
 
     this._fetchChildrenIDs = function (callback) {
         if (this.rootID === 0) {
-            return [1, 2, 3, 4, 5, 6, 7, 8];
+            callback([1, 2, 3, 4, 5, 6, 7, 8]);
+            return;
         }
 
-        var url = "http://api.gbif.org/v0.9/species/"
-        var completeUrl = url + this.rootId.toString() + '/children';
+        var url = "http://api.gbif.org/v0.9/species/";
+        var completeUrl = url + this.rootID.toString() + '/children';
 
         this._fetchData(completeUrl, function (data) {
-            var childrenIDs = []
+            var childrenIDs = [];
+            console.log(data);
 
             var parsedData = JSON.parse(data);
 
@@ -58,7 +68,7 @@ function Tree() {
 
             callback(childrenIDs);
         });
-    }
+    };
 
     this._fetchChildrenData = function (callback) {
         var urls = this._buildUrls(this.childrenIDs);
@@ -68,10 +78,10 @@ function Tree() {
             // Convert string ID to integer ID
             child['key'] = parseInt(child['key']);
 
-            this.children[child['key']] = child;
+            self.children[child['key']] = child;
             callback(child);
         });
-    }
+    };
 
 
     this._buildUrls = function (IDs) {
@@ -82,7 +92,7 @@ function Tree() {
             urls.push(url)
         }
         return urls;
-    }
+    };
 
     this._getAllData = function (urls, callback) {
         for (var i = 0; i < urls.length; i++) {
@@ -90,7 +100,7 @@ function Tree() {
                 callback(data);
             });
         }
-    }
+    };
 
     this._fetchData = function (url, callback) {
         var request = this._createCORSRequest("get", url);
@@ -101,7 +111,7 @@ function Tree() {
             };
             request.send();
         }
-    }
+    };
 
     this._createCORSRequest = function (method, url) {
         var xhr = new XMLHttpRequest();
@@ -114,5 +124,5 @@ function Tree() {
             xhr = null;
         }
         return xhr;
-    }
+    };
 }
