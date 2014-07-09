@@ -1,61 +1,3 @@
-function createCORSRequest(method, url) {
-    var xhr = new XMLHttpRequest();
-    if ("withCredentials" in xhr) {
-        xhr.open(method, url, true);
-    } else if (typeof XDomainRequest != "undefined") {
-        xhr = new XDomainRequest();
-        xhr.open(method, url);
-    } else {
-        xhr = null;
-    }
-    return xhr;
-}
-
-function fetchData(url, processData) {
-    var request = createCORSRequest("get", url);
-    if (request) {
-        request.onload = function () {
-            data = request.response;
-            processData(data);
-        };
-        request.send();
-    }
-}
-
-function getAllUrls(species) {
-    var searchUrl = "http://api.gbif.org/v0.9/species/";
-    var urls = [];
-    for (var i = 0; i < species.length; i++) {
-        var url = encodeURI(searchUrl + species[i]);
-        urls.push(url)
-    }
-    return urls;
-}
-
-function getAllData(urls, callback) {
-    for (var i = 0; i < urls.length; i++) {
-        fetchData(urls[i], function (response) {
-            var parsedData = JSON.parse(response);
-            callback(parsedData);
-        });
-    }
-}
-
-function getChildrenIDs(nodeID, callback) {
-    var url = "http://api.gbif.org/v0.9/species/"
-    var completeUrl = url + nodeID + '/children';
-    fetchData(completeUrl, function (data) {
-        var ids = []
-        var parsedData = JSON.parse(data);
-        var results = parsedData['results'];
-        for (var i = 0; i < results.length; i++) {
-            var id = results[i]["key"];
-            ids.push(id);
-        }
-        callback(ids);
-    });
-}
-
 function openSpeciesWindow(nodeId) {
     var win = window.open('http://www.gbif.org/species/' + nodeId.toString(), '_blank');
     if (win) {
@@ -67,42 +9,23 @@ function openSpeciesWindow(nodeId) {
     }
 }
 
-function expandSubtree(s, fatherID) {
-    getChildrenIDs(fatherID, function (childrenIDs) {
-        updateGraphWithChildren(s, fatherID, childrenIDs);
-    });
-}
+function expandSubtree(s, tree, childID) {
+    tree.setRootToChild(childID);
+    var rootID = tree.getRootID().toString();
 
-function updateGraphWithChildren(sig, fatherID, childrenIDs) {
-    var div = document.getElementById('divID');
-    div.innerHTML = div.innerHTML + JSON.stringify(childrenIDs);
-    addRootNodeWithChildrenConnected(sig, fatherID, childrenIDs);
-}
-
-function addRootNodeWithChildrenConnected(sig, rootID, childrenID) {
-    var graph = sig.graph;
-    var root = graph.nodes(rootID);
-    var scientificName = root['label'];
-    console.log(root);
-
+    var graph = s.graph;
     graph.clear();
 
-    // Add root node
     graph.addNode({
         id: rootID,
-        label: scientificName,
+        label: tree.getRoot()['scientificName'],
         size: 8,
-        x: childrenID.length / 2,
+        x: 5,
         y: 1,
         color: '#09c614'
     });
 
-    var urls = getAllUrls(childrenID);
-
-    getAllData(urls, function (child) {
-
-        div.innerHTML = div.innerHTML + '<br>' + child['scientificName'] + '<br>';
-
+    tree.fetchChildren(function (child) {
         var childID = child['key'].toString();
 
         // Add child node
@@ -130,23 +53,30 @@ function addRootNodeWithChildrenConnected(sig, rootID, childrenID) {
     });
 }
 
-function buildInitialGraph() {
+function buildInitialGraph(tree) {
     var div = document.getElementById('divID');
     var s = new sigma({
         container: 'dataContainer',
-        sideMargin: 00
+        sideMargin: 0
     });
 
-    s.bind('clickNode', function (e) {
-        var nodeID = e.data.node.id;
+    s.bind('clickNode', function (node) {
+        var nodeID = parseInt(node.data.node.id);
         //openSpeciesWindow(nodeID);
-        expandSubtree(s, nodeID);
+
+        if (nodeID === tree.getRootID()) {
+            expandSuperTree(s, tree, nodeID);
+        } else {
+            expandSubtree(s, tree, nodeID);
+        }
     });
 
+    console.log(tree);
+    var rootID = tree.getRootID().toString();
     s.graph.addNode({
         // Main attributes:
-        id: 'n0',
-        label: 'Life',
+        id: rootID,
+        label: tree.getRoot()['scientificName'],
         // Display attributes:
         x: 4.5,
         y: 1,
@@ -156,28 +86,26 @@ function buildInitialGraph() {
 
 
 
-    species = [1, 2, 3, 4, 5, 6, 7, 8]
-    urls = getAllUrls(species);
-    getAllData(urls, function (specie) {
-        div.innerHTML = div.innerHTML + '<br>' + specie['scientificName'] + '<br>';
-        var id = specie['key'].toString();
+    tree.fetchChildren(function (child) {
+        div.innerHTML = div.innerHTML + '<br>' + child['scientificName'] + '<br>';
+        var childID = child['key'].toString();
         s.graph.addNode({
-            id: id,
-            label: specie['scientificName'],
+            id: childID,
+            label: child['scientificName'],
             size: 8,
-            x: id,
+            x: childID,
             y: 3,
             color: '#09c614'
         });
 
         s.graph.addEdge({
-            id: 'n0-' + id,
-            source: 'n0',
-            target: id
+            id: rootID + '-' + childID,
+            source: rootID,
+            target: childID
         });
 
-        console.log(s.graph.nodes(id));
-        div.innerHTML = div.innerHTML + JSON.stringify(s.graph.nodes(id));
+        console.log(s.graph.nodes(rootID));
+        div.innerHTML = div.innerHTML + JSON.stringify(s.graph.nodes(rootID));
 
         // Finally, let's ask our sigma instance to refresh:
         s.refresh();
@@ -186,5 +114,5 @@ function buildInitialGraph() {
     return s;
 }
 
-var s = buildInitialGraph();
-var div = document.getElementById('divID');
+var tree = new Tree();
+var s = buildInitialGraph(tree);
