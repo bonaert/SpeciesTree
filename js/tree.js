@@ -79,7 +79,7 @@ function Tree() {
             child['key'] = parseInt(child['key']);
 
             self.children[child['key']] = child;
-            callback(child);
+            callback(child, self.getNumChildren());
         });
     };
 

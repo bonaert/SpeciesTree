@@ -15,26 +15,31 @@ function expandSubtree(s, tree, childID) {
 
     var graph = s.graph;
     graph.clear();
+    s.refresh();
 
     graph.addNode({
         id: rootID,
         label: tree.getRoot()['scientificName'],
-        size: 8,
+        size: 3,
         x: 5,
-        y: 1,
-        color: '#09c614'
+        y: 5,
+        color: '#c69309'
     });
 
-    tree.fetchChildren(function (child) {
+    tree.fetchChildren(function (child, numChildren) {
+        var childNum = graph.nodes().length - 1;
         var childID = child['key'].toString();
+
+        var xPos = 5 + 5 * Math.cos(2 * Math.PI * childNum / numChildren);
+        var yPos = 5 + 5 * Math.sin(2 * Math.PI * childNum / numChildren);
 
         // Add child node
         graph.addNode({
             id: childID,
             label: child['scientificName'],
-            size: 8,
-            x: graph.nodes().length,
-            y: 15,
+            size: 3,
+            x: xPos,
+            y: yPos,
             color: '#09c614'
         });
 
@@ -42,8 +47,10 @@ function expandSubtree(s, tree, childID) {
         graph.addEdge({
             id: rootID + '-' + childID,
             source: rootID,
-            target: childID
+            target: childID,
+            edgeColor: 'target'
         });
+
 
         // Finally, let's ask our sigma instance to refresh:
         // This will lead to a refresh each time a new node is added, which may
@@ -78,34 +85,38 @@ function buildInitialGraph(tree) {
         id: rootID,
         label: tree.getRoot()['scientificName'],
         // Display attributes:
-        x: 4.5,
-        y: 1,
-        size: 8,
-        color: '#09c614'
+        x: 5,
+        y: 5,
+        size: 3,
+        color: '#c69309'
     });
 
 
 
-    tree.fetchChildren(function (child) {
-        div.innerHTML = div.innerHTML + '<br>' + child['scientificName'] + '<br>';
+    tree.fetchChildren(function (child, numChildren) {
+        var childNum = s.graph.nodes().length;
         var childID = child['key'].toString();
+
+        var xPos = 5 + 5 * Math.cos(2 * Math.PI * childNum / numChildren);
+        var yPos = 5 + 5 * Math.sin(2 * Math.PI * childNum / numChildren);
+
+        // Add child node
         s.graph.addNode({
             id: childID,
             label: child['scientificName'],
-            size: 8,
-            x: childID,
-            y: 3,
+            size: 3,
+            x: xPos,
+            y: yPos,
             color: '#09c614'
         });
 
+        // Add edge between the root and the child
         s.graph.addEdge({
             id: rootID + '-' + childID,
             source: rootID,
-            target: childID
+            target: childID,
+            edgeColor: 'target'
         });
-
-        console.log(s.graph.nodes(rootID));
-        div.innerHTML = div.innerHTML + JSON.stringify(s.graph.nodes(rootID));
 
         // Finally, let's ask our sigma instance to refresh:
         s.refresh();
