@@ -128,14 +128,14 @@ function Tree() {
         var requests = [];
         for (var i = 0; i < urls.length; i++) {
             var url = urls[i];
-            var request = this._createJQueryCORSRequest(url);
+            var request = this._makeRequest(url);
             requests.push(request);
         }
         return requests;
     }
 
     this._makeRequest = function (url) {
-        return this._createJQueryCORSRequest(url);
+        return this._createRequest(url);
     };
 
     this._createRequest = function (url) {
