@@ -1,3 +1,21 @@
+// Extending jQuery.when
+if (jQuery.when.all === undefined) {
+    jQuery.when.all = function (deferreds) {
+        var deferred = new jQuery.Deferred();
+
+        $.when.apply(jQuery, deferreds).then(
+            function () {
+                deferred.resolve(Array.prototype.slice.call(arguments));
+            },
+            function () {
+                deferred.fail(Array.prototype.slice.call(arguments));
+            }
+        );
+
+        return deferred;
+    }
+}
+
 function Tree() {
     var self = this;
     this.levels = ['kingdom', 'phylum', 'order', 'family', 'genus', 'species'];
@@ -38,10 +56,10 @@ function Tree() {
         this.childrenID = {};
     };
 
-    this.fetchChildren = function (callback) {
+    this.fetchChildren = function (onSucess) {
         this._fetchChildrenIDs(function (childrenIDs) {
             self.childrenIDs = childrenIDs;
-            self._fetchChildrenData(callback);
+            self._fetchChildrenData(onSucess);
         });
     };
 
@@ -70,16 +88,22 @@ function Tree() {
         });
     };
 
-    this._fetchChildrenData = function (callback) {
+    this._fetchChildrenData = function (onSuccess) {
         var urls = this._buildUrls(this.childrenIDs);
-        this._getAllData(urls, function (childData) {
-            var child = JSON.parse(childData);
+        this._fetchJQueryData(urls, function (results) {
+            var parsedResults = [];
+            for (var i = 0; i < results.length; i++) {
+                var child = results[i][0];
+                console.log(child);
 
-            // Convert string ID to integer ID
-            child['key'] = parseInt(child['key']);
 
-            self.children[child['key']] = child;
-            callback(child, self.getNumChildren());
+                // Convert string ID to integer ID
+                child['key'] = parseInt(child['key']);
+                self.children[child['key']] = child;
+
+                parsedResults.push(child);
+            }
+            onSuccess(parsedResults);
         });
     };
 
@@ -94,35 +118,30 @@ function Tree() {
         return urls;
     };
 
-    this._getAllData = function (urls, callback) {
+    this._fetchJQueryData = function (urls, onSuccess) {
+        var requests = this._makeAllRequests(urls);
+        var errorFunction = function () {};
+        $.when.all(requests).done(onSuccess, errorFunction);
+    };
+
+    this._makeAllRequests = function (urls) {
+        var requests = [];
         for (var i = 0; i < urls.length; i++) {
-            this._fetchData(urls[i], function (data) {
-                callback(data);
-            });
+            var url = urls[i];
+            var request = this._createJQueryCORSRequest(url);
+            requests.push(request);
         }
+        return requests;
+    }
+
+    this._makeRequest = function (url) {
+        return this._createJQueryCORSRequest(url);
     };
 
-    this._fetchData = function (url, callback) {
-        var request = this._createCORSRequest("get", url);
-        if (request) {
-            request.onload = function () {
-                var data = request.response;
-                callback(data);
-            };
-            request.send();
-        }
-    };
-
-    this._createCORSRequest = function (method, url) {
-        var xhr = new XMLHttpRequest();
-        if ("withCredentials" in xhr) {
-            xhr.open(method, url, true);
-        } else if (typeof XDomainRequest != "undefined") {
-            xhr = new XDomainRequest();
-            xhr.open(method, url);
-        } else {
-            xhr = null;
-        }
-        return xhr;
-    };
+    this._createRequest = function (url) {
+        return $.ajax({
+            type: 'GET',
+            url: url
+        });
+    }
 }
