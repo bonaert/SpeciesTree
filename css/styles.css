@@ -58,3 +58,13 @@ img {
         -webkit-filter: grayscale(0%);
     }
 }
+
+#infoContainer {
+    float:left;
+    width:0 %;
+}
+
+#speciesContainer {
+    float:left;
+    width:100%;
+}

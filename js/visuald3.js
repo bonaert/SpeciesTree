@@ -1,4 +1,4 @@
-var bodySelection = d3.select("body");
+var bodySelection = d3.select("#speciesContainer");
 
 var width = 1000;
 var height = 500;
@@ -66,7 +66,25 @@ function addChildren(svgContainer, children) {
             return yPos;
         })
         .attr('r', 20)
-        .style('fill', 'green');
+        .style('fill', 'green')
+        .on("click", function (d) {
+            console.log(d);
+
+            var infoSelection = d3.select('#infoContainer')
+            var speciesContainer = d3.select('#speciesContainer')
+
+            // Resize both to occupy half of the page
+            infoSelection.style('width', '50%');
+            speciesContainer.style('width', '50%');
+
+            // Remove existing data, if it exists
+            d3.select('#speciesData').remove();
+
+            // Append new data
+            infoSelection.append('p')
+                .attr('id', 'speciesData')
+                .text(JSON.stringify(d));
+        });
 
     //Add the SVG Text Element to the svgContainer
     var text = svgContainer.selectAll("text")
