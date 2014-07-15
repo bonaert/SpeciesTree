@@ -1,7 +1,7 @@
 body {
     margin: 0 auto;
     padding: 2em 2em 4em;
-    max-width: 800px;
+    /*    max-width: 800px;*/
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 16px;
     line-height: 1.5em;
@@ -11,26 +11,26 @@ body {
     -moz-box-shadow: 0 0 2px rgba(0, 0, 0, 0.06);
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.06);
 }
-
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     color: #222;
     font-weight: 600;
     line-height: 1.3em;
 }
-
 h2 {
     margin-top: 1.3em;
 }
-
 a {
     color: #0083e8;
 }
-
-b, strong {
+b,
+strong {
     font-weight: 600;
 }
-
-
 img {
     background: transparent;
     border: 10px solid rgba(0, 0, 0, 0.12);
@@ -40,7 +40,6 @@ img {
     max-width: 95%;
     -webkit-animation: colorize 2s cubic-bezier(0, 0, .78, .36) 1;
 }
-
 @keyframes colorize {
     0% {
         -webkit-filter: grayscale(100%);
@@ -49,7 +48,6 @@ img {
         -webkit-filter: grayscale(0%);
     }
 }
-
 @-webkit-keyframes colorize {
     0% {
         -webkit-filter: grayscale(100%);
@@ -58,13 +56,11 @@ img {
         -webkit-filter: grayscale(0%);
     }
 }
-
 #infoContainer {
-    float:left;
-    width:0 %;
+    float: left;
+    width: 0 %;
 }
-
 #speciesContainer {
-    float:left;
-    width:100%;
+    float: left;
+    width: 100%;
 }
