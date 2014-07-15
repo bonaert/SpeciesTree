@@ -70,20 +70,27 @@ function addChildren(svgContainer, children) {
         .on("click", function (d) {
             console.log(d);
 
-            var infoSelection = d3.select('#infoContainer')
             var speciesContainer = d3.select('#speciesContainer')
+            var infoSelection = d3.select('#infoContainer')
 
             // Resize both to occupy half of the page
-            infoSelection.style('width', '50%');
-            speciesContainer.style('width', '50%');
+            speciesContainer.style('width', '400px');
+            infoSelection.style('width', 'calc(100% - 400px)');
 
             // Remove existing data, if it exists
             d3.select('#speciesData').remove();
 
-            // Append new data
-            infoSelection.append('p')
-                .attr('id', 'speciesData')
-                .text(JSON.stringify(d));
+            var divSelection = infoSelection.append('div').attr('id', 'speciesData')
+                // Append new data
+                //divSelection.append('p')
+                //    .text(JSON.stringify(d));
+
+
+            var url = "http://en.wikipedia.org/wiki/" + d["scientificName"];
+            divSelection.append('iframe')
+                .attr('src', url)
+                .style('width', 'calc(100% - 00px)')
+                .style('height', '1000px');
         });
 
     //Add the SVG Text Element to the svgContainer
