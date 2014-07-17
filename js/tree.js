@@ -76,11 +76,12 @@ function Tree() {
             var childrenIDs = [];
             console.log(data);
 
-            var parsedData = JSON.parse(data);
+            var response = data[0];
 
-            var results = parsedData['results'];
+            var results = response['results'];
             for (var i = 0; i < results.length; i++) {
-                var id = results[i]["key"];
+                var id = parseInt(results[i]["key"]);
+                console.log(id);
                 childrenIDs.push(id);
             }
 
@@ -90,7 +91,7 @@ function Tree() {
 
     this._fetchChildrenData = function (onSuccess) {
         var urls = this._buildUrls(this.childrenIDs);
-        this._fetchJQueryData(urls, function (results) {
+        this._fetchMultipleData(urls, function (results) {
             var parsedResults = [];
             for (var i = 0; i < results.length; i++) {
                 var child = results[i][0];
@@ -118,7 +119,11 @@ function Tree() {
         return urls;
     };
 
-    this._fetchJQueryData = function (urls, onSuccess) {
+    this._fetchData = function (url, onSucess) {
+        this._fetchMultipleData([url], onSucess);
+    }
+
+    this._fetchMultipleData = function (urls, onSuccess) {
         var requests = this._makeAllRequests(urls);
         var errorFunction = function () {};
         $.when.all(requests).done(onSuccess, errorFunction);
