@@ -1,49 +1,152 @@
-{
-    "nodes": [
-        {
-            "id": "n3",
-            "label": "Go back",
-            "x": 0,
-            "y": 1.5,
-            "size": 5
-    },
-        {
-            "id": "n0",
-            "label": "A node",
-            "x": 0,
-            "y": 0,
-            "size": 3
-    },
-        {
-            "id": "n1",
-            "label": "Another node",
-            "x": 3,
-            "y": 1,
-            "size": 2
-    },
-        {
-            "id": "n2",
-            "label": "And a last one",
-            "x": 1,
-            "y": 3,
-            "size": 1
+[
+    {
+        "key": 1,
+        "nubKey": 1,
+        "taxonID": "119459225",
+        "kingdom": "Animalia",
+        "kingdomKey": 1,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "scientificName": "Animalia",
+        "canonicalName": "Animalia",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 1913824,
+        "synonym": false
+    }, {
+        "key": 2,
+        "nubKey": 2,
+        "taxonID": "119463609",
+        "kingdom": "Archaea",
+        "kingdomKey": 2,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "scientificName": "Archaea",
+        "canonicalName": "Archaea",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 462,
+        "synonym": false
+    }, {
+        "key": 3,
+        "nubKey": 3,
+        "taxonID": "119459350",
+        "kingdom": "Bacteria",
+        "kingdomKey": 3,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "scientificName": "Bacteria",
+        "canonicalName": "Bacteria",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 14257,
+        "synonym": false
+    }, {
+        "key": 4,
+        "nubKey": 4,
+        "taxonID": "119459520",
+        "kingdom": "Chromista",
+        "kingdomKey": 4,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "basionymKey": 4,
+        "basionym": "Chromista",
+        "scientificName": "Chromista",
+        "canonicalName": "Chromista",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 18185,
+        "synonym": false
+    }, {
+        "key": 5,
+        "nubKey": 5,
+        "taxonID": "119459322",
+        "kingdom": "Fungi",
+        "kingdomKey": 5,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "basionymKey": 5,
+        "basionym": "Fungi",
+        "scientificName": "Fungi",
+        "canonicalName": "Fungi",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "publishedIn": "Bot. Mar. 23: 371 (1980)",
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 319365,
+        "synonym": false
+    }, {
+        "key": 6,
+        "nubKey": 6,
+        "taxonID": "119459345",
+        "kingdom": "Plantae",
+        "kingdomKey": 6,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "scientificName": "Plantae",
+        "canonicalName": "Plantae",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 953711,
+        "synonym": false
+    }, {
+        "key": 7,
+        "nubKey": 7,
+        "taxonID": "119460390",
+        "kingdom": "Protozoa",
+        "kingdomKey": 7,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "scientificName": "Protozoa",
+        "canonicalName": "Protozoa",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 41538,
+        "synonym": false
+    }, {
+        "key": 8,
+        "nubKey": 8,
+        "taxonID": "121121698",
+        "kingdom": "Viruses",
+        "kingdomKey": 8,
+        "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+        "scientificName": "Viruses",
+        "canonicalName": "Viruses",
+        "authorship": "",
+        "nameType": "WELLFORMED",
+        "rank": "KINGDOM",
+        "origin": "SOURCE",
+        "taxonomicStatus": "ACCEPTED",
+        "nomenclaturalStatus": [],
+        "accordingTo": "The Catalogue of Life, 3rd January 2011",
+        "numDescendants": 5723,
+        "synonym": false
     }
-  ],
-    "edges": [
-        {
-            "id": "e0",
-            "source": "n0",
-            "target": "n1"
-    },
-        {
-            "id": "e1",
-            "source": "n1",
-            "target": "n2"
-    },
-        {
-            "id": "e2",
-            "source": "n2",
-            "target": "n0"
-    }
-  ]
-}
+]
