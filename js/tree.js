@@ -27,7 +27,8 @@ function Tree() {
         'scientificName': 'Life'
     };
 
-    this.children = {};
+    this.basicChildrenInformation = {};
+    this.completeChildrenInformation = {};
     this.childrenIDs = [];
 
     this._buildTreeRoot = function () {
@@ -49,43 +50,81 @@ function Tree() {
         return this.childrenIDs.length;
     };
 
+    this._getMaximumInformation = function (nodeID) {
+        if (this.completeChildrenInformation.hasOwnProperty(nodeID)) {
+            return this.completeChildrenInformation[nodeID];
+        }
+        return this.basicChildrenInformation[nodeID];
+    };
+
     this.setRootToChild = function (childID) {
         this.rootID = childID;
-        this.root = this.children[childID];
-        this.children = {};
-        this.childrenID = {};
+        this.root = this._getMaximumInformation(childID);
+        this.basicChildrenInformation = {};
+        this.completeChildrenInformation = {};
+        this.childrenIDs = [];
     };
 
-    this.fetchChildren = function (onSucess) {
-        this._fetchChildrenIDs(function (childrenIDs) {
-            self.childrenIDs = childrenIDs;
-            self._fetchChildrenData(onSucess);
+    this._buildBasicChildrenInformationrray = function () {
+        var result = [];
+        for (var i = 0; i < self.childrenIDs.length; i++) {
+            var id = self.childrenIDs[i];
+            result.push(self.basicChildrenInformation[id]);
+        }
+        return result;
+    }
+
+    this.fetchBasicChildrenInformation = function (onSucess) {
+        this._fetchBasicChildrenInformation(function (children) {
+            self._processBasicChildrenInformationCallback(children);
+            var infoArray = self._buildBasicChildrenInformationrray();
+            onSucess(infoArray);
+        })
+    };
+
+    this.fetchCompleteChildrenInformation = function (childID) {
+        return;
+    };
+
+
+    this._processBasicChildrenInformationCallback = function (children) {
+        self.basicChildrenInformation = {};
+        self.completeChildrenInformation = {};
+        self.childrenIDs = [];
+
+        console.log(children);
+
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+
+            // Convert string ID to integer ID
+            // Replace key as id in child object, for consistency
+            child.id = parseInt(child.key);
+            delete child.key
+
+            self.childrenIDs.push(child.id);
+            self.basicChildrenInformation[child.id] = child;
+        }
+    }
+
+    this._fetchRootNodesBasicInformation = function (callback) {
+        var request = $.getJSON('data/data.json', function (data) {
+            callback(data);
         });
-    };
+    }
 
-    this._fetchChildrenIDs = function (callback) {
+    this._fetchBasicChildrenInformation = function (callback) {
         if (this.rootID === 0) {
-            callback([1, 2, 3, 4, 5, 6, 7, 8]);
+            console.info("Fetch local info");
+            this._fetchRootNodesBasicInformation(callback);
             return;
         }
 
-        var url = "http://api.gbif.org/v0.9/species/";
-        var completeUrl = url + this.rootID.toString() + '/children';
+        var baseUrl = "http://api.gbif.org/v0.9/species/";
+        var completeUrl = baseUrl + this.rootID.toString() + '/children';
 
         this._fetchData(completeUrl, function (data) {
-            var childrenIDs = [];
-            console.log(data);
-
-            var response = data[0];
-
-            var results = response['results'];
-            for (var i = 0; i < results.length; i++) {
-                var id = parseInt(results[i]["key"]);
-                console.log(id);
-                childrenIDs.push(id);
-            }
-
-            callback(childrenIDs);
+            callback(data[0].results);
         });
     };
 
@@ -99,8 +138,8 @@ function Tree() {
 
 
                 // Convert string ID to integer ID
-                child['key'] = parseInt(child['key']);
-                self.children[child['key']] = child;
+                child.key = parseInt(child.key);
+                self.completeChildrenInformation[child.key] = child;
 
                 parsedResults.push(child);
             }
@@ -114,14 +153,14 @@ function Tree() {
         var urls = [];
         for (var i = 0; i < IDs.length; i++) {
             var url = encodeURI(searchUrl + IDs[i]);
-            urls.push(url)
+            urls.push(url);
         }
         return urls;
     };
 
     this._fetchData = function (url, onSucess) {
         this._fetchMultipleData([url], onSucess);
-    }
+    };
 
     this._fetchMultipleData = function (urls, onSuccess) {
         var requests = this._makeAllRequests(urls);
@@ -137,7 +176,7 @@ function Tree() {
             requests.push(request);
         }
         return requests;
-    }
+    };
 
     this._makeRequest = function (url) {
         return this._createRequest(url);
@@ -148,5 +187,5 @@ function Tree() {
             type: 'GET',
             url: url
         });
-    }
+    };
 }
