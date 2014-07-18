@@ -67,7 +67,7 @@ function showInformation(data) {
         .text('Try other site')
         .style('margin-left', '100px')
         .on('click', function () {
-            var url = "http://www.gbif.org/species/" + data['key'];
+            var url = "http://www.gbif.org/species/" + data.id;
             var iframeSelection = divSelection.select('iframe');
             iframeSelection.attr('src', url);
             this.remove();
@@ -91,8 +91,8 @@ function showChildren(data, svgContainer, tree) {
     speciesContainer.style('width', 'calc(100%)');
     infoSelection.style('width', '0px');
 
-    tree.setRootToChild(data['key']);
-    tree.fetchChildren(function (children) {
+    tree.setRootToChild(data.id);
+    tree.fetchBasicChildrenInformation(function (children) {
         addChildren(svgContainer, tree, children);
     });
 }
@@ -111,6 +111,7 @@ function resizeSvg(svgContainer, children) {
 function resizeSvgHeight(svgContainer, children) {
 
     // Distance between two children
+    console.log((children.length - 1) * heightBetweenChildren);
     var contentHeight = Math.max(500, (children.length - 1) * heightBetweenChildren);
     var marginHeight = 2 * verticalMargin;
     height = contentHeight + marginHeight;
@@ -232,20 +233,7 @@ function addChildren(svgContainer, tree, children) {
     addChildrenToSvg(svgContainer, tree, children);
 }
 
-//tree.fetchChildren(addChildren);
-var data = [{
-    'key': 10,
-    'scientificName': 'Bob'
-}, {
-    'key': 20,
-    'scientificName': 'Joe'
-}, {
-    'key': 30,
-    'scientificName': 'Jim'
-}, {
-    'key': 40,
-    'scientificName': 'What the hell is this? You should do something else, Gregory!'
-}];
+
 
 var selection = d3.select("#speciesContainer");
 
@@ -254,7 +242,6 @@ var svgSelection = selection.append("svg")
     .attr('height', height);
 
 var tree = new Tree();
-tree.fetchChildren(function (children) {
+tree.fetchBasicChildrenInformation(function (children) {
     addChildren(svgSelection, tree, children);
 });
-//addChildren(svgSelection, data);
