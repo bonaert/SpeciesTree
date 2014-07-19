@@ -64,3 +64,6 @@ img {
     float: left;
     width: 100%;
 }
+b {
+    font-weight: bold;
+}
