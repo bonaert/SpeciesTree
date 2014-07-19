@@ -22,7 +22,7 @@ function capitalise(string) {
 }
 
 function getName(data) {
-    return data["vernacularName"] || data["canonicalName"] || data["scientificName"] || "Error: could not find name";
+    return data.vernacularName || data.canonicalName || data.scientificName || "Error: could not find name";
 }
 
 function getScientificName(data) {
@@ -44,21 +44,35 @@ function getScientificName(data) {
     return name;
 }
 
+
 function showInformation(data) {
-    console.log(data);
-
-    var speciesContainer = d3.select('#speciesContainer')
-    var infoSelection = d3.select('#infoContainer')
-
-    // Resize both to occupy half of the page
-    speciesContainer.style('width', '400px');
-    infoSelection.style('width', 'calc(100% - 400px)');
+    adjustInfoContainerWidth();
 
     // Remove existing data, if it exists
     d3.select('#speciesData').remove();
 
-    var divSelection = infoSelection.append('div').attr('id', 'speciesData')
+    var infoSelection = d3.select('#infoContainer');
+    var divSelection = infoSelection.append('div').attr('id', 'speciesData').attr('class', 'verticalLine');
+
     showWikipediaInformation(data);
+
+}
+
+function putLoader(divSelection) {
+    divSelection.append('div').attr('class', 'ui active inline loader').attr('id', 'loader');
+}
+
+function removeLoader(divSelection) {
+    divSelection.select('#loader').remove();
+}
+
+function adjustInfoContainerWidth() {
+    var speciesContainer = d3.select('#speciesContainer');
+    var infoSelection = d3.select('#infoContainer');
+
+    // Resize both to occupy half of the page
+    speciesContainer.style('width', '400px');
+    infoSelection.style('width', 'calc(100% - 500px)');
 }
 
 function removeWikiCruft(text) {
@@ -83,6 +97,9 @@ function removeWikiCruft(text) {
 }
 
 function showWikipediaInformation(data) {
+    var divSelection = d3.select('#speciesData');
+    putLoader(divSelection);
+
     var wiki = new Wikipedia();
     var name = getScientificName(data);
     wiki.article(name, function (data) {
@@ -90,15 +107,40 @@ function showWikipediaInformation(data) {
         var content = data.extract;
         var content = removeWikiCruft(content);
 
-        $('#speciesData').append('<h1>' + title + '</h1>').append(content)
+        removeLoader(divSelection);
+        divSelection.append('h1').attr('class', 'header').text(title);
+        divSelection.append('div').attr('id', 'content').html(content);
+
+        wiki.image(name, function (imagesData) {
+            var url = chooseImage(imagesData);
+            divSelection.insert('img', '#content').attr('src', url).attr('alt', 'image').attr('class', 'ui huge image');
+        });
     });
+}
+
+function chooseImage(imagesData) {
+    for (var i = 0; i < imagesData.length; i++) {
+        var image = imagesData[i];
+        var title = image.title;
+
+        if (title.indexOf("logo") !== -1) {
+            continue;
+        } else if (title.indexOf("Red Pencil") !== -1) {
+            continue;
+        } else if (title.indexOf("Wikibooks") !== -1) {
+            continue;
+        }
+
+        var url = image.imageinfo[0].url;
+        return url;
+    }
 }
 
 function showChildren(data, svgContainer, tree) {
     console.log(data);
 
-    var speciesContainer = d3.select('#speciesContainer')
-    var infoSelection = d3.select('#infoContainer')
+    var speciesContainer = d3.select('#speciesContainer');
+    var infoSelection = d3.select('#infoContainer');
     d3.select('#speciesData').remove();
 
     // Resize both to occupy half of the page
