@@ -58,26 +58,40 @@ function showInformation(data) {
     d3.select('#speciesData').remove();
 
     var divSelection = infoSelection.append('div').attr('id', 'speciesData')
+    showWikipediaInformation(data);
+}
 
+function removeWikiCruft(text) {
+    var lowercaseText = text.toLowerCase();
 
-    var name = getScientificName(data)
-    var url = "http://en.wikipedia.org/wiki/" + name;
+    var index = lowercaseText.indexOf('see also');
+    if (index !== -1) {
+        return text.substring(0, index);
+    }
 
-    var otherSiteSelection = divSelection.append('p')
-        .text('Try other site')
-        .style('margin-left', '100px')
-        .on('click', function () {
-            var url = "http://www.gbif.org/species/" + data.id;
-            var iframeSelection = divSelection.select('iframe');
-            iframeSelection.attr('src', url);
-            this.remove();
-        });
+    var index = lowercaseText.indexOf('references');
+    if (index !== -1) {
+        return text.substring(0, index);
+    }
 
-    var iframeSelection = divSelection.append('iframe');
-    iframeSelection.attr('src', url)
-        .style('width', 'calc(100%)')
-        .style('margin-left', '100px')
-        .style('height', '1000px');
+    var index = lowercaseText.indexOf('bibliography');
+    if (index !== -1) {
+        return text.substring(0, index);
+    }
+
+    return text;
+}
+
+function showWikipediaInformation(data) {
+    var wiki = new Wikipedia();
+    var name = getScientificName(data);
+    wiki.article(name, function (data) {
+        var title = data.title;
+        var content = data.extract;
+        var content = removeWikiCruft(content);
+
+        $('#speciesData').append('<h1>' + title + '</h1>').append(content)
+    });
 }
 
 function showChildren(data, svgContainer, tree) {
@@ -85,7 +99,7 @@ function showChildren(data, svgContainer, tree) {
 
     var speciesContainer = d3.select('#speciesContainer')
     var infoSelection = d3.select('#infoContainer')
-    d3.select('iframe').remove();
+    d3.select('#speciesData').remove();
 
     // Resize both to occupy half of the page
     speciesContainer.style('width', 'calc(100%)');
@@ -168,7 +182,7 @@ function addHorizontalBars(childrenSelection, numChildren) {
     }
 }
 
-function addCircles(childrenSelection, childrenData) {
+function addCircles(childrenSelection, childrenData, tree) {
     var circles = childrenSelection.selectAll('image')
         .data(childrenData)
         .enter()
@@ -187,7 +201,7 @@ function addCircles(childrenSelection, childrenData) {
         .attr('height', 30)
         .attr('width', 30)
         .attr('xlink:href', '/image/info.png')
-        .on("click", showInformation)
+        .on("click", showInformation);
 }
 
 function addText(svgContainer, tree, childrenSelection, childrenData) {
@@ -220,7 +234,7 @@ function addChildrenToSvg(svgContainer, tree, childrenData) {
     var numChildren = childrenData.length;
 
     addHorizontalBars(childrenSelection, numChildren);
-    addCircles(childrenSelection, childrenData);
+    addCircles(childrenSelection, childrenData, tree);
     addText(svgContainer, tree, childrenSelection, childrenData);
 }
 
