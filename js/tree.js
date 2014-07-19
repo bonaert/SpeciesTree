@@ -1,21 +1,3 @@
-// Extending jQuery.when
-if (jQuery.when.all === undefined) {
-    jQuery.when.all = function (deferreds) {
-        var deferred = new jQuery.Deferred();
-
-        $.when.apply(jQuery, deferreds).then(
-            function () {
-                deferred.resolve(Array.prototype.slice.call(arguments));
-            },
-            function () {
-                deferred.fail(Array.prototype.slice.call(arguments));
-            }
-        );
-
-        return deferred;
-    }
-}
-
 function Tree() {
     var self = this;
     this.levels = ['kingdom', 'phylum', 'order', 'family', 'genus', 'species'];
@@ -28,7 +10,7 @@ function Tree() {
     };
 
     this.basicChildrenInformation = {};
-    this.completeChildrenInformation = {};
+    this.childrenDescription = {};
     this.childrenIDs = [];
 
     this._buildTreeRoot = function () {
@@ -51,8 +33,8 @@ function Tree() {
     };
 
     this._getMaximumInformation = function (nodeID) {
-        if (this.completeChildrenInformation.hasOwnProperty(nodeID)) {
-            return this.completeChildrenInformation[nodeID];
+        if (this.childrenDescription.hasOwnProperty(nodeID)) {
+            return this.childrenDescription[nodeID];
         }
         return this.basicChildrenInformation[nodeID];
     };
@@ -61,7 +43,7 @@ function Tree() {
         this.rootID = childID;
         this.root = this._getMaximumInformation(childID);
         this.basicChildrenInformation = {};
-        this.completeChildrenInformation = {};
+        this.childrenDescription = {};
         this.childrenIDs = [];
     };
 
@@ -82,14 +64,32 @@ function Tree() {
         })
     };
 
-    this.fetchCompleteChildrenInformation = function (childID) {
-        return;
+    this.fetchChildDescription = function (childID, onSuccess) {
+        var url = this._buildUrl(childID) + '/descriptions';
+        this._fetchData(url, function (data) {
+            var result = [];
+
+            var data = data[0].results;
+
+            for (var i = 0; i < data.length; i++) {
+                var currentDescription = data[i];
+                if (currentDescription.language === "ENGLISH") {
+                    result.push({
+                        "type": currentDescription.type,
+                        "description": currentDescription.description
+                    });
+                }
+            }
+
+            self.childrenDescription[childID] = result;
+            onSuccess(result);
+        });
     };
 
 
     this._processBasicChildrenInformationCallback = function (children) {
         self.basicChildrenInformation = {};
-        self.completeChildrenInformation = {};
+        self.childrenDescription = {};
         self.childrenIDs = [];
 
         console.log(children);
@@ -139,7 +139,7 @@ function Tree() {
 
                 // Convert string ID to integer ID
                 child.key = parseInt(child.key);
-                self.completeChildrenInformation[child.key] = child;
+                self.childrenDescription[child.key] = child;
 
                 parsedResults.push(child);
             }
@@ -149,14 +149,19 @@ function Tree() {
 
 
     this._buildUrls = function (IDs) {
-        var searchUrl = "http://api.gbif.org/v0.9/species/";
         var urls = [];
         for (var i = 0; i < IDs.length; i++) {
-            var url = encodeURI(searchUrl + IDs[i]);
+            var id = IDs[i];
+            var url = this._buildUrl(id);
             urls.push(url);
         }
         return urls;
     };
+
+    this._buildUrl = function (ID) {
+        var searchUrl = "http://api.gbif.org/v0.9/species/";
+        return encodeURI(searchUrl + ID);
+    }
 
     this._fetchData = function (url, onSucess) {
         this._fetchMultipleData([url], onSucess);
