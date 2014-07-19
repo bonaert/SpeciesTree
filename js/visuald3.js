@@ -242,7 +242,7 @@ function addCircles(childrenSelection, childrenData, tree) {
         })
         .attr('height', 30)
         .attr('width', 30)
-        .attr('xlink:href', '/image/info.png')
+        .attr('xlink:href', 'image/info.png')
         .on("click", showInformation);
 }
 
