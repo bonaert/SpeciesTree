@@ -1,7 +1,7 @@
 function Tree() {
     var self = this;
-    this.levels = ['kingdom', 'phylum', 'order', 'family', 'genus', 'species'];
-    this.level = 0;
+    this.levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+    this.level = 1;
 
     this.rootID = 0;
     this.root = {
@@ -12,13 +12,6 @@ function Tree() {
     this.basicChildrenInformation = {};
     this.childrenDescription = {};
     this.childrenIDs = [];
-
-    this._buildTreeRoot = function () {
-        return {
-            'key': 0,
-            'scientificName': 'Life'
-        };
-    };
 
     this.getRootID = function () {
         return this.rootID;
@@ -39,12 +32,17 @@ function Tree() {
         return this.basicChildrenInformation[nodeID];
     };
 
+    this.isSpeciesLevel = function () {
+        return this.level === 7;
+    }
+
     this.setRootToChild = function (childID) {
         this.rootID = childID;
         this.root = this._getMaximumInformation(childID);
         this.basicChildrenInformation = {};
         this.childrenDescription = {};
         this.childrenIDs = [];
+        this.level = this.level + 1;
     };
 
     this._buildBasicChildrenInformationrray = function () {
@@ -115,7 +113,6 @@ function Tree() {
 
     this._fetchBasicChildrenInformation = function (callback) {
         if (this.rootID === 0) {
-            console.info("Fetch local info");
             this._fetchRootNodesBasicInformation(callback);
             return;
         }
@@ -134,8 +131,6 @@ function Tree() {
             var parsedResults = [];
             for (var i = 0; i < results.length; i++) {
                 var child = results[i][0];
-                console.log(child);
-
 
                 // Convert string ID to integer ID
                 child.key = parseInt(child.key);
@@ -177,14 +172,10 @@ function Tree() {
         var requests = [];
         for (var i = 0; i < urls.length; i++) {
             var url = urls[i];
-            var request = this._makeRequest(url);
+            var request = this._createRequest(url);
             requests.push(request);
         }
         return requests;
-    };
-
-    this._makeRequest = function (url) {
-        return this._createRequest(url);
     };
 
     this._createRequest = function (url) {

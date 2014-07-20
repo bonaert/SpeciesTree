@@ -137,7 +137,10 @@ function chooseImage(imagesData) {
 }
 
 function showChildren(data, svgContainer, tree) {
-    console.log(data);
+    if (tree.isSpeciesLevel()) {
+        console.info("Reached species level");
+        return;
+    }
 
     var speciesContainer = d3.select('#speciesContainer');
     var infoSelection = d3.select('#infoContainer');
