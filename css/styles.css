@@ -27,10 +27,6 @@ h2 {
 a {
     color: #0083e8;
 }
-b,
-strong {
-    font-weight: 600;
-}
 img {
     background: transparent;
     border: 10px solid rgba(0, 0, 0, 0.12);
