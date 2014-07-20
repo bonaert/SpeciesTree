@@ -45,7 +45,7 @@ function getScientificName(data) {
 }
 
 
-function showInformation(data) {
+function showInformation(data, tree) {
     adjustInfoContainerWidth();
 
     // Remove existing data, if it exists
@@ -54,7 +54,7 @@ function showInformation(data) {
     var infoSelection = d3.select('#infoContainer');
     var divSelection = infoSelection.append('div').attr('id', 'speciesData').attr('class', 'verticalLine');
 
-    showWikipediaInformation(data);
+    showWikipediaInformation(data, tree);
 
 }
 
@@ -96,7 +96,7 @@ function removeWikiCruft(text) {
     return text;
 }
 
-function showWikipediaInformation(data) {
+function showWikipediaInformation(data, tree) {
     var divSelection = d3.select('#speciesData');
     putLoader(divSelection);
 
@@ -108,7 +108,8 @@ function showWikipediaInformation(data) {
         var content = removeWikiCruft(content);
 
         removeLoader(divSelection);
-        divSelection.append('h1').attr('class', 'header').text(title);
+        var titleText = title + " (" + tree.getTaxon() + ')';
+        divSelection.append('h1').attr('class', 'header').text(titleText);
         divSelection.append('div').attr('id', 'content').html(content);
 
         wiki.image(name, function (imagesData) {
@@ -134,10 +135,11 @@ function chooseImage(imagesData) {
         var image = imagesData[i];
         var title = image.title;
         var mime = image.imageinfo[0].mime;
+        var url = image.imageinfo[0].url;
 
         // For speacial wikipedia icons
-        var stringList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star']
-        if (containsAny(title, stringList)) {
+        var stringList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote']
+        if (containsAny(title, stringList) || containsAny(url, stringList)) {
             continue;
         }
 
@@ -146,7 +148,6 @@ function chooseImage(imagesData) {
             continue;
         }
 
-        var url = image.imageinfo[0].url;
         return url;
     }
 }
@@ -261,7 +262,9 @@ function addCircles(childrenSelection, childrenData, tree) {
         .attr('height', 30)
         .attr('width', 30)
         .attr('xlink:href', 'image/info.png')
-        .on("click", showInformation);
+        .on("click", function (data) {
+            showInformation(data, tree);
+        });
 }
 
 function addText(svgContainer, tree, childrenSelection, childrenData) {

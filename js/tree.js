@@ -36,6 +36,10 @@ function Tree() {
         return this.level === 7;
     }
 
+    this.getTaxon = function () {
+        return this.levels[this.level - 1];
+    }
+
     this.setRootToChild = function (childID) {
         this.rootID = childID;
         this.root = this._getMaximumInformation(childID);
