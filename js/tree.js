@@ -5,9 +5,10 @@ function Tree() {
 
     this.rootID = 0;
     this.root = {
-        'key': 0,
+        'id': 0,
         'scientificName': 'Life'
     };
+    this.parentIDs = [0]
 
     this.basicChildrenInformation = {};
     this.childrenDescription = {};
@@ -41,6 +42,8 @@ function Tree() {
     }
 
     this.setRootToChild = function (childID) {
+        this.parentIDs.push(this.rootID);
+
         this.rootID = childID;
         this.root = this._getMaximumInformation(childID);
         this.basicChildrenInformation = {};
@@ -48,6 +51,28 @@ function Tree() {
         this.childrenIDs = [];
         this.level = this.level + 1;
     };
+
+    this.isAtKingdomLevel = function () {
+        return (this.parentIDs.length === 1);
+    }
+
+    this.setRootToParent = function () {
+        // Can't go up, since where at the kingdom level
+        if (this.isAtKingdomLevel()) {
+            return;
+        }
+
+        var parentID = this.parentIDs.pop();
+        this.rootID = parentID;
+        this.root = {
+            'id': parentID,
+            'scientificName': 'No idea! See tree.setRootToParent function'
+        };
+        this.basicChildrenInformation = {};
+        this.childrenDescription = {};
+        this.childrenIDs = [];
+        this.level = this.level - 1;
+    }
 
     this._buildBasicChildrenInformationrray = function () {
         var result = [];

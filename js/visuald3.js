@@ -75,6 +75,16 @@ function adjustInfoContainerWidth() {
     infoSelection.style('width', 'calc(100% - 500px)');
 }
 
+function setInformationPaneWidthToZero() {
+    var speciesContainer = d3.select('#speciesContainer');
+    var infoSelection = d3.select('#infoContainer');
+    d3.select('#speciesData').remove();
+
+    // Resize both to occupy half of the page
+    speciesContainer.style('width', 'calc(100%)');
+    infoSelection.style('width', '0px');
+}
+
 function removeWikiCruft(text) {
     var lowercaseText = text.toLowerCase();
 
@@ -153,19 +163,27 @@ function chooseImage(imagesData) {
     }
 }
 
-function showChildren(data, svgContainer, tree) {
-    if (tree.isSpeciesLevel()) {
-        console.info("Reached species level");
+function expandSuperTree(data, svgContainer, tree) {
+    if (tree.isAtKingdomLevel()) {
+        console.info("Reached kingdom level. Can't go up.");
         return;
     }
 
-    var speciesContainer = d3.select('#speciesContainer');
-    var infoSelection = d3.select('#infoContainer');
-    d3.select('#speciesData').remove();
+    setInformationPaneWidthToZero();
 
-    // Resize both to occupy half of the page
-    speciesContainer.style('width', 'calc(100%)');
-    infoSelection.style('width', '0px');
+    tree.setRootToParent();
+    tree.fetchBasicChildrenInformation(function (children) {
+        addChildren(svgContainer, tree, children);
+    });
+}
+
+function showChildren(data, svgContainer, tree) {
+    if (tree.isSpeciesLevel()) {
+        console.info("Reached species level. Can't go down.");
+        return;
+    }
+
+    setInformationPaneWidthToZero();
 
     tree.setRootToChild(data.id);
     tree.fetchBasicChildrenInformation(function (children) {
@@ -185,23 +203,26 @@ function resizeSvg(svgContainer, children) {
 }
 
 function resizeSvgHeight(svgContainer, children) {
-
     // Distance between two children
-    console.log((children.length - 1) * heightBetweenChildren);
     var contentHeight = Math.max(500, (children.length - 1) * heightBetweenChildren);
+
     var marginHeight = 2 * verticalMargin;
+
     height = contentHeight + marginHeight;
     svgContainer.attr('height', height);
 }
 
-function addRootCircle(svgContainer) {
+function addRootCircle(svgContainer, tree) {
     var height = svgContainer.attr('height');
 
     svgSelection.append('circle')
         .attr("cx", rootCircleCenterXPos)
         .attr("cy", height / 2)
         .attr("r", rootCircleRadius)
-        .style("fill", "green");
+        .style("fill", "green")
+        .on("click", function (data) {
+            expandSuperTree(data, svgContainer, tree);
+        });
 }
 
 function addHorizontalLineFromCircle(svgContainer) {
@@ -294,7 +315,7 @@ function addText(svgContainer, tree, childrenSelection, childrenData) {
         .attr('fill', 'rgb(83, 83, 83)')
         .on('click', function (data) {
             showChildren(data, svgContainer, tree);
-        });;
+        });
 }
 
 function sortByNumberDescendants(childrenData) {
@@ -321,7 +342,7 @@ function addChildrenToSvg(svgContainer, tree, childrenData) {
 function addChildren(svgContainer, tree, children) {
     clearSvg(svgContainer)
     resizeSvg(svgContainer, children);
-    addRootCircle(svgContainer);
+    addRootCircle(svgContainer, tree);
     addHorizontalLineFromCircle(svgContainer);
     addVerticalLine(svgContainer);
     addChildrenToSvg(svgContainer, tree, children);
