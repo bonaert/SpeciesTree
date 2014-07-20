@@ -103,11 +103,17 @@ function showWikipediaInformation(data, tree) {
     var wiki = new Wikipedia();
     var name = getScientificName(data);
     wiki.article(name, function (data) {
+        removeLoader(divSelection);
+        console.log(data);
+        if (typeof data === "undefined") {
+            divSelection.append('h1').text('No available information');
+            return;
+        }
+
         var title = data.title;
         var content = data.extract;
         var content = removeWikiCruft(content);
 
-        removeLoader(divSelection);
         var titleText = title + " (" + tree.getTaxon() + ')';
         divSelection.append('h1').attr('class', 'header').text(titleText);
         divSelection.append('div').attr('id', 'content').html(content);
@@ -123,7 +129,7 @@ function containsAny(title, stringList) {
     var titleLowerCase = title.toLowerCase();
     for (var i = 0; i < stringList.length; i++) {
         var s = stringList[i].toLowerCase();
-        if (title.indexOf(s) !== -1) {
+        if (titleLowerCase.indexOf(s) !== -1) {
             return true;
         }
     }
@@ -137,14 +143,9 @@ function chooseImage(imagesData) {
         var mime = image.imageinfo[0].mime;
         var url = image.imageinfo[0].url;
 
-        // For speacial wikipedia icons
-        var stringList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote']
-        if (containsAny(title, stringList) || containsAny(url, stringList)) {
-            continue;
-        }
-
-        // For video and images
-        if (mime.indexOf('application') !== -1) {
+        // For speacial wikipedia icons, video and audio
+        var filterList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book']
+        if (containsAny(title, filterList) || containsAny(url, filterList) || mime.indexOf('application') !== -1) {
             continue;
         }
 
@@ -282,7 +283,11 @@ function addText(svgContainer, tree, childrenSelection, childrenData) {
             return yPos;
         })
         .text(function (data) {
-            return capitalise(getName(data));
+            var text = capitalise(getName(data));
+            if (data.numDescendants !== 0 && data.numDescendants !== undefined) {
+                var text = text + ' (' + data.numDescendants + ' descendants)'
+            }
+            return text;
         })
         .attr('font-family', 'sans-serif')
         .attr('font-size', '20px')
@@ -292,9 +297,21 @@ function addText(svgContainer, tree, childrenSelection, childrenData) {
         });;
 }
 
+function sortByNumberDescendants(childrenData) {
+    return childrenData.sort(function (a, b) {
+        var keyA = a.numDescendants || 0,
+            keyB = b.numDescendants || 0;
+        // Compare the 2 dates
+        if (keyA > keyB) return -1;
+        if (keyA < keyB) return 1;
+        return 0;
+    });
+}
+
 function addChildrenToSvg(svgContainer, tree, childrenData) {
     var childrenSelection = svgContainer.append('g').attr('id', 'childrenGroup');
     var numChildren = childrenData.length;
+    childrenData = sortByNumberDescendants(childrenData);
 
     addHorizontalBars(childrenSelection, numChildren);
     addCircles(childrenSelection, childrenData, tree);

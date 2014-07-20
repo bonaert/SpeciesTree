@@ -13,6 +13,14 @@ function Wikipedia() {
     this.process_article = function (data, onSuccess) {
         console.log(data);
         var result = data.query.pages;
+
+        if ((typeof result[-1] !== "undefined") && (result[-1].missing === "")) {
+            console.info("Zero");
+            onSuccess(undefined);
+            return;
+        }
+
+
         var keys = [];
         for (var key in result) {
             keys.push(key);
