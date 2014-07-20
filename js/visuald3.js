@@ -118,16 +118,31 @@ function showWikipediaInformation(data) {
     });
 }
 
+function containsAny(title, stringList) {
+    var titleLowerCase = title.toLowerCase();
+    for (var i = 0; i < stringList.length; i++) {
+        var s = stringList[i].toLowerCase();
+        if (title.indexOf(s) !== -1) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function chooseImage(imagesData) {
     for (var i = 0; i < imagesData.length; i++) {
         var image = imagesData[i];
         var title = image.title;
+        var mime = image.imageinfo[0].mime;
 
-        if (title.indexOf("logo") !== -1) {
+        // For speacial wikipedia icons
+        var stringList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star']
+        if (containsAny(title, stringList)) {
             continue;
-        } else if (title.indexOf("Red Pencil") !== -1) {
-            continue;
-        } else if (title.indexOf("Wikibooks") !== -1) {
+        }
+
+        // For video and images
+        if (mime.indexOf('application') !== -1) {
             continue;
         }
 
