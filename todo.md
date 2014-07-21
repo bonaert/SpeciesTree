@@ -7,5 +7,5 @@ TODO
 - [x] Expand to father... undo expanding, by clicking on root node
 - [ ] Fix UI left -> right -> left behaviour of graph
 - [x] Add information on taxonomic level (Kingdom, ..., ..., Species)
-- [ ] Fetch every result available, even if they are more than 20. Current system make a single request, fetching only the 20 results. 
+- [x] Fetch every result available, even if they are more than 20. Current system make a single request, fetching only the 20 results. Sort of fixed: we fetch the first 100 results, which is enough for most cases.
 - [ ] Fix problems with non-classical taxonomic orders (superfamilies, and other super-... taxons)
