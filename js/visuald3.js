@@ -226,7 +226,7 @@ function addRootCircle(svgContainer, tree) {
 
     svgSelection.append('circle')
         .attr("cx", rootCircleCenterXPos)
-        .attr("cy", height / 2)
+        .attr("cy", verticalMargin + rootCircleRadius)
         .attr("r", rootCircleRadius)
         .style("fill", "green")
         .on("click", function (data) {
@@ -239,9 +239,9 @@ function addHorizontalLineFromCircle(svgContainer) {
 
     svgSelection.append('line')
         .attr('x1', rootCircleCenterXPos + rootCircleRadius)
-        .attr('y1', height / 2)
+        .attr('y1', verticalMargin + rootCircleRadius)
         .attr('x2', verticalBarXPos)
-        .attr('y2', height / 2)
+        .attr('y2', verticalMargin + rootCircleRadius)
         .attr('stroke-width', 5)
         .attr('stroke', 'black');
 }
