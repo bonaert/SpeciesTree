@@ -1,6 +1,6 @@
 function Tree() {
     var self = this;
-    this.levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+    this.levels = ['life', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
     this.level = 1;
 
     this.rootID = 0;
@@ -34,11 +34,11 @@ function Tree() {
     };
 
     this.isSpeciesLevel = function () {
-        return this.level === 7;
+        return this.level === this.levels.length - 1;
     }
 
     this.getTaxon = function () {
-        return this.levels[this.level - 1];
+        return this.levels[this.level];
     }
 
     this.setRootToChild = function (childID) {
@@ -124,6 +124,12 @@ function Tree() {
         for (var i = 0; i < children.length; i++) {
             var child = children[i];
 
+            // It is not self.levels[self.level + 1], because self.level starts at 1, instead of 0
+            var currentChildLevel = self.levels[self.level]
+            if (child.rank.toLowerCase() !== currentChildLevel) {
+                continue;
+            }
+
             // Convert string ID to integer ID
             // Replace key as id in child object, for consistency
             child.id = parseInt(child.key);
@@ -147,7 +153,7 @@ function Tree() {
         }
 
         var baseUrl = "http://api.gbif.org/v0.9/species/";
-        var completeUrl = baseUrl + this.rootID.toString() + '/children';
+        var completeUrl = baseUrl + this.rootID.toString() + '/children?limit=100';
 
         this._fetchData(completeUrl, function (data) {
             callback(data[0].results);
