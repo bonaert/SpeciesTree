@@ -20,6 +20,9 @@ function Wikipedia() {
             } else if (typeof result.extract === "undefined") {
                 self._simple_article(speciesName, onSuccess);
                 return;
+            } else if (result.extract.indexOf('may refer') !== -1) {
+                self._simple_article(speciesName, onSuccess);
+                return;
             }
 
             onSuccess(result);
@@ -101,6 +104,14 @@ function Wikipedia() {
         });
     }
 
+    this._get_image_keys = function (result) {
+        var keys = [];
+        for (var key in result) {
+            keys.push(key);
+        }
+        return keys;
+    }
+
     this.process_image = function (data) {
         console.log(data);
         if (typeof data.query === "undefined") {
@@ -110,8 +121,14 @@ function Wikipedia() {
         }
 
         var result = data.query.pages;
+        var keys = self._get_image_keys(result).sort(function (a, b) {
+
+
+            return Math.abs(a) - Math.abs(b);
+        });
         var imagesData = [];
-        for (var key in result) {
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
             imagesData.push(result[key]);
         };
 
