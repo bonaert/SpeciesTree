@@ -1,3 +1,5 @@
+var filterList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit']
+
 var width = 1000;
 var height = 500;
 
@@ -111,8 +113,9 @@ function showWikipediaInformation(data, tree) {
     putLoader(divSelection);
 
     var wiki = new Wikipedia();
-    var name = getScientificName(data);
-    wiki.article(name, function (data) {
+    var speciesName = getScientificName(data);
+    var commonName = data.vernacularName;
+    wiki.article(commonName, speciesName, function (data) {
         removeLoader(divSelection);
         console.log(data);
         if (typeof data === "undefined") {
@@ -128,9 +131,11 @@ function showWikipediaInformation(data, tree) {
         divSelection.append('h1').attr('class', 'header').text(titleText);
         divSelection.append('div').attr('id', 'content').html(content);
 
-        wiki.image(name, function (imagesData) {
+        wiki.image(commonName, speciesName, function (imagesData) {
             var url = chooseImage(imagesData);
-            divSelection.insert('img', '#content').attr('src', url).attr('alt', 'image').attr('class', 'ui huge image');
+            if (typeof url !== "undefined") {
+                divSelection.insert('img', '#content').attr('src', url).attr('alt', 'image').attr('class', 'ui huge image');
+            }
         });
     });
 }
@@ -152,10 +157,14 @@ function chooseImage(imagesData) {
         var title = image.title;
         var mime = image.imageinfo[0].mime;
         var url = image.imageinfo[0].url;
+        var size = image.imageinfo[0].size;
 
         // For speacial wikipedia icons, video and audio
-        var filterList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book']
         if (containsAny(title, filterList) || containsAny(url, filterList) || mime.indexOf('application') !== -1) {
+            continue;
+        }
+
+        if (size >= 5000000) {
             continue;
         }
 
@@ -204,7 +213,7 @@ function resizeSvg(svgContainer, children) {
 
 function resizeSvgHeight(svgContainer, children) {
     // Distance between two children
-    var contentHeight = Math.max(500, (children.length - 1) * heightBetweenChildren);
+    var contentHeight = Math.max(2 * rootCircleRadius, (children.length - 1) * heightBetweenChildren);
 
     var marginHeight = 2 * verticalMargin;
 
