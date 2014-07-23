@@ -52,22 +52,32 @@ img {
         -webkit-filter: grayscale(0%);
     }
 }
-#infoContainer {
-    float: left;
-    width: 0 %;
-}
-#speciesContainer {
-    float: left;
-    width: 100%;
-}
 b {
     font-weight: bold;
 }
-.verticalLine {
-    border-right: solid #545454 1px;
-    margin-right: 20px;
-    padding-right: 10px;
+#loader {
+    margin-left: 20px;
+    margin-top: 20px;
 }
 .header {
     text-align: center;
+}
+.verticalLine {
+    border-left: solid #545454 1px;
+    margin-left: 20px;
+    padding-left: 10px;
+}
+/* Very Wide */
+
+.ui.very.wide.sidebar {
+    width: calc(100% - 800px) !important;
+    margin-left: calc(100% - 800px) !important;
+    padding-left: 10px;
+    background: #fff;
+}
+.ui.active.very.wide.sidebar {
+    margin-left: 0px !important;
+}
+.ui.active.right.very.wide.sidebar {
+    margin-left: calc(-100% + 800px) !important;
 }

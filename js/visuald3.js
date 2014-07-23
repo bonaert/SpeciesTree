@@ -1,4 +1,10 @@
-var filterList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter']
+var filterList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink']
+var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret'];
+extend(filterList, portalImages);
+
+function extend(a, b) {
+    Array.prototype.push.apply(a, b)
+}
 
 var width = 1000;
 var height = 500;
@@ -47,18 +53,42 @@ function getScientificName(data) {
 }
 
 
-function showInformation(data, tree) {
-    adjustInfoContainerWidth();
-
-    // Remove existing data, if it exists
-    d3.select('#speciesData').remove();
-
-    var infoSelection = d3.select('#infoContainer');
-    var divSelection = infoSelection.append('div').attr('id', 'speciesData').attr('class', 'verticalLine');
-
-    showWikipediaInformation(data, tree);
-
+function addRemoveIconToSidebar() {
+    d3.select('.sidebar').append('i')
+        .attr('class', 'huge remove icon')
+        .attr('id', 'removeIcon')
+        .on('click', function () {
+            removeSidebarContent();
+            hideSidebar();
+        });
 }
+
+function removeSidebarContent() {
+    d3.selectAll('#speciesData').remove();
+    d3.selectAll('#removeIcon').remove();
+}
+
+function showSidebar() {
+    $('.sidebar').sidebar('show');
+}
+
+function hideSidebar() {
+    $('.sidebar').sidebar('hide');
+}
+
+function setUpSidebar() {
+    removeSidebarContent();
+    addRemoveIconToSidebar();
+    d3.select('#infoContainer').append('div').attr('id', 'speciesData');
+    showSidebar();
+}
+
+function tearDownSidebar() {
+    removeSidebarContent();
+    hideSidebar();
+}
+
+
 
 function putLoader(divSelection) {
     divSelection.append('div').attr('class', 'ui active inline loader').attr('id', 'loader');
@@ -68,45 +98,19 @@ function removeLoader(divSelection) {
     divSelection.select('#loader').remove();
 }
 
-function adjustInfoContainerWidth() {
-    var speciesContainer = d3.select('#speciesContainer');
-    var infoSelection = d3.select('#infoContainer');
-
-    // Resize both to occupy half of the page
-    speciesContainer.style('width', '400px');
-    infoSelection.style('width', 'calc(100% - 500px)');
-}
-
-function setInformationPaneWidthToZero() {
-    var speciesContainer = d3.select('#speciesContainer');
-    var infoSelection = d3.select('#infoContainer');
+function showInformation(data, tree) {
+    // Remove existing data, if it exists
     d3.select('#speciesData').remove();
 
-    // Resize both to occupy half of the page
-    speciesContainer.style('width', 'calc(100%)');
-    infoSelection.style('width', '0px');
+    setUpSidebar();
+
+    var infoSelection = d3.select('#infoContainer');
+    var divSelection = infoSelection.append('div').attr('id', 'speciesData').attr('class', 'verticalLine');
+
+    showWikipediaInformation(data, tree);
 }
 
-function removeWikiCruft(text) {
-    var lowercaseText = text.toLowerCase();
 
-    var index = lowercaseText.indexOf('see also');
-    if (index !== -1) {
-        return text.substring(0, index);
-    }
-
-    var index = lowercaseText.indexOf('references');
-    if (index !== -1) {
-        return text.substring(0, index);
-    }
-
-    var index = lowercaseText.indexOf('bibliography');
-    if (index !== -1) {
-        return text.substring(0, index);
-    }
-
-    return text;
-}
 
 function showWikipediaInformation(data, tree) {
     var divSelection = d3.select('#speciesData');
@@ -139,6 +143,27 @@ function showWikipediaInformation(data, tree) {
             }
         });
     });
+}
+
+function removeWikiCruft(text) {
+    var lowercaseText = text.toLowerCase();
+
+    var index = lowercaseText.indexOf('see also');
+    if (index !== -1) {
+        return text.substring(0, index);
+    }
+
+    var index = lowercaseText.indexOf('references');
+    if (index !== -1) {
+        return text.substring(0, index);
+    }
+
+    var index = lowercaseText.indexOf('bibliography');
+    if (index !== -1) {
+        return text.substring(0, index);
+    }
+
+    return text;
 }
 
 function containsAny(title, stringList) {
@@ -179,7 +204,8 @@ function expandSuperTree(data, svgContainer, tree) {
         return;
     }
 
-    setInformationPaneWidthToZero();
+    removeSidebarContent();
+    hideSidebar();
 
     tree.setRootToParent();
     tree.fetchBasicChildrenInformation(function (children) {
@@ -193,7 +219,8 @@ function showChildren(data, svgContainer, tree) {
         return;
     }
 
-    setInformationPaneWidthToZero();
+    removeSidebarContent();
+    hideSidebar();
 
     tree.setRootToChild(data.id);
     tree.fetchBasicChildrenInformation(function (children) {
@@ -359,9 +386,7 @@ function addChildren(svgContainer, tree, children) {
 }
 
 
-
 var selection = d3.select("#speciesContainer");
-
 var svgSelection = selection.append("svg")
     .attr('width', width)
     .attr('height', height);
