@@ -1,6 +1,9 @@
 var filterList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink']
-var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret'];
+var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 'Leaf_1_web', 'Martinique.web'];
+var unwantedImages = ['map'];
+
 extend(filterList, portalImages);
+extend(filterList, unwantedImages);
 
 function extend(a, b) {
     Array.prototype.push.apply(a, b)
@@ -190,7 +193,8 @@ function chooseImage(imagesData) {
             continue;
         }
 
-        if (size >= 5000000) {
+        // Giant image or icon
+        if (size >= 5000000 || size <= 40000) {
             continue;
         }
 
