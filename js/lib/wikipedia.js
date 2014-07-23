@@ -122,9 +122,7 @@ function Wikipedia() {
 
         var result = data.query.pages;
         var keys = self._get_image_keys(result).sort(function (a, b) {
-
-
-            return Math.abs(a) - Math.abs(b);
+            return a - b;
         });
         var imagesData = [];
         for (var i = 0; i < keys.length; i++) {
