@@ -8,4 +8,13 @@ Preview
 ==============
 
 ![New Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/newpreview.png)
+
+
+
+
+
+
+Old Preview
+==============
+
 ![Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/preview.png)
