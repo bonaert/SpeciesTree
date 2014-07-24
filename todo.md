@@ -13,4 +13,4 @@ TODO
 1 - Since beings are sorted by number of descendants and people usually choose some of the first one, it is unlikely that they will go into a dead end. 
 If they do, they can very easily go back up one level. If we didn't expand, people wouldn't understand why (unless explicit). 
 
-- [ ] When there are no subtaxons, display a message explain it. (people could think it is a program bug, instead a lack of available information)
+- [x] When there are no subtaxons, display a message explain it. (people could think it is a program bug, instead a lack of available information)
