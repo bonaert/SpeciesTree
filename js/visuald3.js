@@ -253,6 +253,18 @@ function resizeSvgHeight(svgContainer, children) {
     svgContainer.attr('height', height);
 }
 
+function addNoInformationAvailableText(childrenSelection) {
+
+    childrenSelection.append('text')
+        .attr('x', verticalBarXPos + textOffset)
+        .attr('y', verticalMargin + 35)
+        .text('No available information')
+        .attr('font-family', 'sans-serif')
+        .attr('font-size', '20px')
+        .attr('fill', 'rgb(83, 83, 83)')
+
+}
+
 function addRootCircle(svgContainer, tree) {
     var height = svgContainer.attr('height');
 
@@ -373,6 +385,12 @@ function sortByNumberDescendants(childrenData) {
 function addChildrenToSvg(svgContainer, tree, childrenData) {
     var childrenSelection = svgContainer.append('g').attr('id', 'childrenGroup');
     var numChildren = childrenData.length;
+    console.log(childrenData);
+    if (numChildren === 0) {
+        addNoInformationAvailableText(childrenSelection);
+        return;
+    }
+
     childrenData = sortByNumberDescendants(childrenData);
 
     addHorizontalBars(childrenSelection, numChildren);
