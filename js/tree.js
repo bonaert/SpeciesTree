@@ -13,6 +13,7 @@ function Tree() {
     this.basicChildrenInformation = {};
     this.childrenDescription = {};
     this.childrenIDs = [];
+    this.isVirusChildren = false;
 
     this.getRootID = function () {
         return this.rootID;
@@ -50,6 +51,9 @@ function Tree() {
         this.childrenDescription = {};
         this.childrenIDs = [];
         this.level = this.level + 1;
+        if (childID === 8) {
+            this.isVirusChildren = true;
+        }
     };
 
     this.isAtKingdomLevel = function () {
@@ -72,6 +76,9 @@ function Tree() {
         this.childrenDescription = {};
         this.childrenIDs = [];
         this.level = this.level - 1;
+        if (this.rootID === 0) {
+            this.isVirusChildren = false;
+        }
     }
 
     this._buildBasicChildrenInformationrray = function () {
@@ -121,12 +128,16 @@ function Tree() {
 
         console.log(children);
 
+        // It is not self.levels[self.level + 1], because self.level starts at 1, instead of 0
+        var currentChildLevel = self.levels[self.level]
+
         for (var i = 0; i < children.length; i++) {
             var child = children[i];
 
-            // It is not self.levels[self.level + 1], because self.level starts at 1, instead of 0
-            var currentChildLevel = self.levels[self.level]
-            if (child.rank.toLowerCase() !== currentChildLevel) {
+            // Viruses are subject to a different type of classification, where the children are order-level (instead of phylum).
+            // Therefore, this restriction cannot take place. For other kingdom, the children will (strangely) include
+            // childs not immedially lower-level (instead of kingdom->phylum, some are kingdom->genus).
+            if (!this.isVirusChildren && child.rank.toLowerCase() !== currentChildLevel) {
                 continue;
             }
 
