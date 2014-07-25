@@ -1,13 +1,8 @@
-var filterList = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink']
+/*jslint browser: true, devel: true, nomen: true */
+var wikipediaImages = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink']
 var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 'Leaf_1_web', 'Martinique.web'];
 var unwantedImages = ['map'];
-
-extend(filterList, portalImages);
-extend(filterList, unwantedImages);
-
-function extend(a, b) {
-    Array.prototype.push.apply(a, b)
-}
+var filterList = _.union(wikipediaImages, portalImages, unwantedImages);
 
 var width = 1000;
 var height = 500;
@@ -28,9 +23,7 @@ var barWidth = 100;
 // Distance between two children
 var heightBetweenChildren = 100;
 
-function capitalise(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
+
 
 function getName(data) {
     return data.vernacularName || data.canonicalName || data.scientificName || "Error: could not find name";
@@ -169,16 +162,7 @@ function removeWikiCruft(text) {
     return text;
 }
 
-function containsAny(title, stringList) {
-    var titleLowerCase = title.toLowerCase();
-    for (var i = 0; i < stringList.length; i++) {
-        var s = stringList[i].toLowerCase();
-        if (titleLowerCase.indexOf(s) !== -1) {
-            return true;
-        }
-    }
-    return false;
-}
+
 
 function chooseImage(imagesData) {
     for (var i = 0; i < imagesData.length; i++) {
