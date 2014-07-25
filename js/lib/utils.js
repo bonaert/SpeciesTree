@@ -19,3 +19,18 @@ if (jQuery.when.all === undefined) {
 _.isDefined = function (obj) {
     return !_.isUndefined(obj);
 }
+
+function containsAny(title, stringList) {
+    var titleLowerCase = title.toLowerCase();
+    for (var i = 0; i < stringList.length; i++) {
+        var s = stringList[i].toLowerCase();
+        if (titleLowerCase.indexOf(s) !== -1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function capitalise(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
