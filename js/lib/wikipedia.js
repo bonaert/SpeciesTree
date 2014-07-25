@@ -6,7 +6,7 @@ function Wikipedia() {
 
 
     this.article = function (commonName, speciesName, onSuccess) {
-        var names = [commonName, speciesName];
+        var names = _.unique([commonName, speciesName]);
         var urls = self._build_urls(names, self._makeArticleUrl);
         self._makeRequestUntilGoodContent(urls, self.processArticle, self._hasGoodContent, onSuccess);
     };
@@ -52,7 +52,7 @@ function Wikipedia() {
     };
 
     this.image = function (commonName, speciesName, onSuccess) {
-        var names = [commonName, speciesName];
+        var names = _.unique([commonName, speciesName]);
         var urls = self._build_urls(names, self._makeImageUrl);
         self._makeRequestUntilGoodContent(urls, self.process_image, self._imageHasGoodContent, onSuccess);
     };
