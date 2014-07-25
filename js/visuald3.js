@@ -1,5 +1,5 @@
-/*jslint browser: true, devel: true, nomen: true */
-var wikipediaImages = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink']
+/*jslint browser: true, devel: true, nomen: true, sloppy: true */
+var wikipediaImages = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink'];
 var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 'Leaf_1_web', 'Martinique.web'];
 var unwantedImages = ['map'];
 var filterList = _.union(wikipediaImages, portalImages, unwantedImages);
@@ -24,7 +24,6 @@ var barWidth = 100;
 var heightBetweenChildren = 100;
 
 
-
 function getName(data) {
     return data.vernacularName || data.canonicalName || data.scientificName || "Error: could not find name";
 }
@@ -33,11 +32,7 @@ function getScientificName(data) {
     var name = data.scientificName;
 
     // Used when name has date and scientist attached
-    if (typeof data.authorship !== "undefined") {
-        if (data.authorship === "") {
-            return name;
-        }
-
+    if (_.isDefined(data.authorship) && data.authorship !== "") {
         var index = name.indexOf(data.authorship);
         if (index !== -1) {
             // remove the space before the name too
@@ -48,51 +43,7 @@ function getScientificName(data) {
     return name;
 }
 
-
-function addRemoveIconToSidebar() {
-    d3.select('.sidebar').append('i')
-        .attr('class', 'huge remove icon')
-        .attr('id', 'removeIcon')
-        .on('click', function () {
-            removeSidebarContent();
-            hideSidebar();
-        });
-}
-
-function removeSidebarContent() {
-    d3.selectAll('#speciesData').remove();
-    d3.selectAll('#removeIcon').remove();
-}
-
-function showSidebar() {
-    $('.sidebar').sidebar('show');
-}
-
-function hideSidebar() {
-    $('.sidebar').sidebar('hide');
-}
-
-function setUpSidebar() {
-    removeSidebarContent();
-    addRemoveIconToSidebar();
-    d3.select('#infoContainer').append('div').attr('id', 'speciesData');
-    showSidebar();
-}
-
-function tearDownSidebar() {
-    removeSidebarContent();
-    hideSidebar();
-}
-
-
-
-function putLoader(divSelection) {
-    divSelection.append('div').attr('class', 'ui active inline loader').attr('id', 'loader');
-}
-
-function removeLoader(divSelection) {
-    divSelection.select('#loader').remove();
-}
+// Data stuff
 
 function showInformation(data, tree) {
     // Remove existing data, if it exists
@@ -124,8 +75,8 @@ function showWikipediaInformation(data, tree) {
         }
 
         var title = data.title;
-        var content = data.extract;
-        var content = removeWikiCruft(content);
+        var raw_content = data.extract;
+        var content = removeWikiCruft(raw_content);
 
         var titleText = title + " (" + tree.getTaxon() + ')';
         divSelection.append('h1').attr('class', 'header').text(titleText);
@@ -192,7 +143,6 @@ function expandSuperTree(data, svgContainer, tree) {
         return;
     }
 
-    removeSidebarContent();
     hideSidebar();
 
     tree.setRootToParent();
@@ -207,7 +157,6 @@ function showChildren(data, svgContainer, tree) {
         return;
     }
 
-    removeSidebarContent();
     hideSidebar();
 
     tree.setRootToChild(data.id);
@@ -216,6 +165,53 @@ function showChildren(data, svgContainer, tree) {
     });
 }
 
+
+
+// UI Stuff
+
+
+// Sidebar
+function removeSidebarContent() {
+    d3.selectAll('#speciesData').remove();
+    d3.selectAll('#removeIcon').remove();
+}
+
+function showSidebar() {
+    $('.sidebar').sidebar('show');
+}
+
+function hideSidebar() {
+    removeSidebarContent();
+    $('.sidebar').sidebar('hide');
+}
+
+function addRemoveIconToSidebar() {
+    d3.select('.sidebar').append('i')
+        .attr('class', 'huge remove icon')
+        .attr('id', 'removeIcon')
+        .on('click', function () {
+            hideSidebar();
+        });
+}
+
+function setUpSidebar() {
+    removeSidebarContent();
+    addRemoveIconToSidebar();
+    d3.select('#infoContainer').append('div').attr('id', 'speciesData');
+    showSidebar();
+}
+
+
+// Loader
+function putLoader(divSelection) {
+    divSelection.append('div').attr('class', 'ui active inline loader').attr('id', 'loader');
+}
+
+function removeLoader(divSelection) {
+    divSelection.select('#loader').remove();
+}
+
+// Svg
 function clearSvg(svgContainer) {
     svgContainer.selectAll('g').remove();
     svgContainer.selectAll('circle').remove();
@@ -230,15 +226,15 @@ function resizeSvg(svgContainer, children) {
 function resizeSvgHeight(svgContainer, children) {
     // Distance between two children
     var contentHeight = Math.max(2 * rootCircleRadius, (children.length - 1) * heightBetweenChildren);
-
     var marginHeight = 2 * verticalMargin;
 
     height = contentHeight + marginHeight;
     svgContainer.attr('height', height);
 }
 
-function addNoInformationAvailableText(childrenSelection) {
 
+// Graph UI
+function addNoInformationAvailableText(childrenSelection) {
     childrenSelection.append('text')
         .attr('x', verticalBarXPos + textOffset)
         .attr('y', verticalMargin + 35)
@@ -370,16 +366,16 @@ function addChildrenToSvg(svgContainer, tree, childrenData) {
     var childrenSelection = svgContainer.append('g').attr('id', 'childrenGroup');
     var numChildren = childrenData.length;
     console.log(childrenData);
+
     if (numChildren === 0) {
         addNoInformationAvailableText(childrenSelection);
-        return;
+    } else {
+        childrenData = sortByNumberDescendants(childrenData);
+
+        addHorizontalBars(childrenSelection, numChildren);
+        addCircles(childrenSelection, childrenData, tree);
+        addText(svgContainer, tree, childrenSelection, childrenData);
     }
-
-    childrenData = sortByNumberDescendants(childrenData);
-
-    addHorizontalBars(childrenSelection, numChildren);
-    addCircles(childrenSelection, childrenData, tree);
-    addText(svgContainer, tree, childrenSelection, childrenData);
 }
 
 function addChildren(svgContainer, tree, children) {
@@ -390,7 +386,6 @@ function addChildren(svgContainer, tree, children) {
     addVerticalLine(svgContainer);
     addChildrenToSvg(svgContainer, tree, children);
 }
-
 
 var selection = d3.select("#speciesContainer");
 var svgSelection = selection.append("svg")
