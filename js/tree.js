@@ -1,3 +1,4 @@
+/*jslint browser: true, devel: true, nomen: true, vars: true  */
 function Tree() {
     var self = this;
     this.levels = ['life', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
@@ -8,7 +9,7 @@ function Tree() {
         'id': 0,
         'scientificName': 'Life'
     };
-    this.parentIDs = [0]
+    this.parentIDs = [0];
 
     this.basicChildrenInformation = {};
     this.childrenDescription = {};
@@ -36,11 +37,11 @@ function Tree() {
 
     this.isSpeciesLevel = function () {
         return this.level === this.levels.length - 1;
-    }
+    };
 
     this.getTaxon = function () {
         return this.levels[this.level];
-    }
+    };
 
     this.setRootToChild = function (childID) {
         this.parentIDs.push(this.rootID);
@@ -51,6 +52,8 @@ function Tree() {
         this.childrenDescription = {};
         this.childrenIDs = [];
         this.level = this.level + 1;
+
+        // Add flag when where stepping into virus subtaxons
         if (childID === 8) {
             this.isVirusChildren = true;
         }
@@ -58,7 +61,7 @@ function Tree() {
 
     this.isAtKingdomLevel = function () {
         return (this.parentIDs.length === 1);
-    }
+    };
 
     this.setRootToParent = function () {
         // Can't go up, since where at the kingdom level
@@ -76,44 +79,41 @@ function Tree() {
         this.childrenDescription = {};
         this.childrenIDs = [];
         this.level = this.level - 1;
+
+        // Remove flag when where stepping outside virus subtaxons
         if (this.rootID === 0) {
             this.isVirusChildren = false;
         }
-    }
+    };
 
     this._buildBasicChildrenInformationrray = function () {
-        var result = [];
-        for (var i = 0; i < self.childrenIDs.length; i++) {
-            var id = self.childrenIDs[i];
-            result.push(self.basicChildrenInformation[id]);
-        }
-        return result;
-    }
+        return _.map(self.childrenIDs, function (id) {
+            return self.basicChildrenInformation[id];
+        });
+    };
 
     this.fetchBasicChildrenInformation = function (onSucess) {
         this._fetchBasicChildrenInformation(function (children) {
             self._processBasicChildrenInformationCallback(children);
             var infoArray = self._buildBasicChildrenInformationrray();
             onSucess(infoArray);
-        })
+        });
     };
 
     this.fetchChildDescription = function (childID, onSuccess) {
         var url = this._buildUrl(childID) + '/descriptions';
-        this._fetchData(url, function (data) {
+        this._fetchData(url, function (response) {
             var result = [];
 
-            var data = data[0].results;
-
-            for (var i = 0; i < data.length; i++) {
-                var currentDescription = data[i];
-                if (currentDescription.language === "ENGLISH") {
+            var data = response[0].results;
+            _.forEach(data, function (description) {
+                if (description.language === "ENGLISH") {
                     result.push({
-                        "type": currentDescription.type,
-                        "description": currentDescription.description
+                        "type": description.type,
+                        "description": description.description
                     });
                 }
-            }
+            });
 
             self.childrenDescription[childID] = result;
             onSuccess(result);
@@ -126,10 +126,9 @@ function Tree() {
         self.childrenDescription = {};
         self.childrenIDs = [];
 
-        console.log(children);
 
         // It is not self.levels[self.level + 1], because self.level starts at 1, instead of 0
-        var currentChildLevel = self.levels[self.level]
+        var currentChildLevel = self.levels[self.level];
 
         for (var i = 0; i < children.length; i++) {
             var child = children[i];
@@ -149,54 +148,45 @@ function Tree() {
             self.childrenIDs.push(child.id);
             self.basicChildrenInformation[child.id] = child;
         }
-    }
+    };
 
     this._fetchRootNodesBasicInformation = function (callback) {
-        var request = $.getJSON('data/data.json', function (data) {
-            callback(data);
-        });
-    }
+        $.getJSON('data/data.json', callback);
+    };
 
     this._fetchBasicChildrenInformation = function (callback) {
         if (this.rootID === 0) {
-            this._fetchRootNodesBasicInformation(callback);
-            return;
+            this._fetchRootNodesBasicInformation(callback);;
+        } else {
+            var baseUrl = "http://api.gbif.org/v0.9/species/";
+            var completeUrl = baseUrl + this.rootID.toString() + '/children?limit=100';
+
+            this._fetchData(completeUrl, function (data) {
+                callback(data[0].results);
+            });
         }
-
-        var baseUrl = "http://api.gbif.org/v0.9/species/";
-        var completeUrl = baseUrl + this.rootID.toString() + '/children?limit=100';
-
-        this._fetchData(completeUrl, function (data) {
-            callback(data[0].results);
-        });
     };
 
     this._fetchChildrenData = function (onSuccess) {
         var urls = this._buildUrls(this.childrenIDs);
         this._fetchMultipleData(urls, function (results) {
             var parsedResults = [];
-            for (var i = 0; i < results.length; i++) {
-                var child = results[i][0];
+            _.each(results, function (result) {
+                var child = result[0];
 
                 // Convert string ID to integer ID
                 child.key = parseInt(child.key);
                 self.childrenDescription[child.key] = child;
 
                 parsedResults.push(child);
-            }
+            });
             onSuccess(parsedResults);
         });
     };
 
 
     this._buildUrls = function (IDs) {
-        var urls = [];
-        for (var i = 0; i < IDs.length; i++) {
-            var id = IDs[i];
-            var url = this._buildUrl(id);
-            urls.push(url);
-        }
-        return urls;
+        return _.map(IDs, this._buildUrl);
     };
 
     this._buildUrl = function (ID) {
@@ -215,13 +205,7 @@ function Tree() {
     };
 
     this._makeAllRequests = function (urls) {
-        var requests = [];
-        for (var i = 0; i < urls.length; i++) {
-            var url = urls[i];
-            var request = this._createRequest(url);
-            requests.push(request);
-        }
-        return requests;
+        return _.map(urls, this._createRequest);
     };
 
     this._createRequest = function (url) {
