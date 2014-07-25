@@ -15,3 +15,7 @@ if (jQuery.when.all === undefined) {
         return deferred;
     }
 }
+
+_.isDefined = function (obj) {
+    return !_.isUndefined(obj);
+}
