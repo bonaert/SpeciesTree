@@ -10,14 +10,11 @@ var height = 500;
 var rootCircleRadius = 30;
 var rootCircleCenterXPos = 30;
 
-var childCircleRadius = 20;
-
 var verticalMargin = 30;
 
 var horizontalOffset = 100;
 var verticalBarXPos = rootCircleCenterXPos + rootCircleRadius + horizontalOffset;
 
-var barTextOffset = 10;
 var barWidth = 100;
 
 // Distance between two children
@@ -56,8 +53,10 @@ function showInformation(data, tree) {
 
     setUpSidebar();
 
-    var infoSelection = d3.select('#infoContainer');
-    var divSelection = infoSelection.append('div').attr('id', 'speciesData').attr('class', 'verticalLine');
+    d3.select('#infoContainer')
+        .append('div')
+        .attr('id', 'speciesData')
+        .attr('class', 'verticalLine');
 
     showWikipediaInformation(data, tree);
 }
@@ -125,9 +124,10 @@ function chooseImage(imagesData) {
     for (var i = 0; i < imagesData.length; i++) {
         var image = imagesData[i];
         var title = image.title;
-        var mime = image.imageinfo[0].mime;
-        var url = image.imageinfo[0].url;
-        var size = image.imageinfo[0].size;
+        var info = image.imageinfo[0];
+        var mime = info.mime;
+        var url = info.url;
+        var size = info.size;
 
         // For unwanted images, such as wikipedia icons, portal images and some maps
         if (containsAny(title, filterList) || containsAny(url, filterList)) {
@@ -145,7 +145,7 @@ function chooseImage(imagesData) {
     }
 }
 
-function expandSuperTree(data, svgContainer, tree) {
+function expandSuperTree(svgContainer, tree) {
     if (tree.isAtKingdomLevel()) {
         console.info("Reached kingdom level. Can't go up.");
         return;
@@ -249,7 +249,7 @@ function resizeSvgHeight(svgContainer, children) {
 // Graph UI
 function addNoInformationAvailableText(childrenSelection) {
     childrenSelection.append('text')
-        .attr('x', verticalBarXPos + textOffset)
+        .attr('x', verticalBarXPos + 10)
         .attr('y', verticalMargin + 35)
         .text('No available information')
         .attr('font-family', 'sans-serif')
@@ -260,18 +260,12 @@ function addNoInformationAvailableText(childrenSelection) {
 
 function addRootCircle(svgContainer, tree) {
     var isAtKingdomLevel = tree.isAtKingdomLevel();
-
     var selection = d3.select("#speciesContainer");
-
-    // <div class="circular ui icon button">
-    //   <i class="icon settings"></i></div>
-    var xPos = rootCircleCenterXPos;
-    var yPos = verticalMargin;
 
     var button = selection.append('div')
         .style('position', 'absolute')
-        .style("left", xPos.toString() + 'px')
-        .style("top", yPos.toString() + 'px')
+        .style("left", rootCircleCenterXPos.toString() + 'px')
+        .style("top", verticalMargin.toString() + 'px')
         .attr('id', 'rootButton');
 
     if (isAtKingdomLevel) {
@@ -280,7 +274,7 @@ function addRootCircle(svgContainer, tree) {
     } else {
         button.attr('class', 'circular active big ui red icon button')
             .on("click", function (data) {
-                expandSuperTree(data, svgContainer, tree);
+                expandSuperTree(svgContainer, tree);
             });
 
         button.append('i').attr('class', 'level up icon');
@@ -327,21 +321,19 @@ function addHorizontalBars(childrenSelection, numChildren) {
     }
 }
 
-function addChildrenTextButton(childrenSelection, svgContainer, childrenData, tree) {
+function addChildrenTextButton(svgContainer, childrenData, tree) {
     var selection = d3.select("#speciesContainer");
     var buttons = selection.selectAll('.textButton')
         .data(childrenData)
         .enter()
         .append('div');
 
+    var xPos = verticalBarXPos + barWidth;
     buttons.style('position', 'absolute')
-        .style('left', function (data) {
-            var xPos = verticalBarXPos + barWidth;
-            return xPos.toString() + 'px';
-        }).style('top', function (data, index) {
-            var height = index * heightBetweenChildren;
-            var yPos = height + 8;
-            return yPos.toString() + 'px';
+        .style('left', xPos.toString() + 'px')
+        .style('top', function (data, index) {
+            var height = index * heightBetweenChildren + 8;
+            return height.toString() + 'px';
         })
         .attr('class', 'textButton');
 
@@ -352,7 +344,7 @@ function addChildrenTextButton(childrenSelection, svgContainer, childrenData, tr
 function addTextToButtons(buttons, svgContainer, tree) {
     var isAtSpeciesLevel = tree.isSpeciesLevel();
 
-    var button = buttons.append('div')
+    var button = buttons.append('div');
     if (isAtSpeciesLevel) {
         button.attr('class', 'ui active blue button');
     } else {
@@ -371,7 +363,7 @@ function addTextToButtons(buttons, svgContainer, tree) {
         var text = getName(data);
         var width = Math.max(200, text.length * 15 + 20);
         return width.toString() + 'px';
-    })
+    });
 
     if (!isAtSpeciesLevel) {
         button.append('i').attr('class', 'level down icon');
@@ -408,7 +400,7 @@ function addChildrenToSvg(svgContainer, tree, childrenData) {
     } else {
         childrenData = sortByNumberDescendants(childrenData);
         addHorizontalBars(childrenSelection, numChildren);
-        addChildrenTextButton(childrenSelection, svgContainer, childrenData, tree);
+        addChildrenTextButton(svgContainer, childrenData, tree);
     }
 }
 

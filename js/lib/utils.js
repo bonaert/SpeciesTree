@@ -18,7 +18,7 @@ if (jQuery.when.all === undefined) {
 
 _.isDefined = function (obj) {
     return !_.isUndefined(obj);
-}
+};
 
 function containsAny(title, stringList) {
     var titleLowerCase = title.toLowerCase();

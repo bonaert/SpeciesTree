@@ -41,10 +41,9 @@ function Wikipedia() {
 
     this._getContentKeys = function (result) {
         var keys = _.keys(result);
-        var useful_keys = _.filter(keys, function (key) {
+        return _.filter(keys, function (key) {
             return (key !== -1) && _.isDefined(result[key].extract);
         });
-        return useful_keys;
     };
 
     this._isNoContent = function (content_keys, pages) {
@@ -75,11 +74,9 @@ function Wikipedia() {
             return a - b;
         });
 
-        var imagesData = _.map(keys, function (key) {
+        return _.map(keys, function (key) {
             return result[key];
         });
-
-        return imagesData;
     };
 
     this._makeRequestUntilGoodContent = function (urls, process_data, has_good_content, onSuccess) {

@@ -16,18 +16,6 @@ function Tree() {
     this.childrenIDs = [];
     this.isVirusChildren = false;
 
-    this.getRootID = function () {
-        return this.rootID;
-    };
-
-    this.getRoot = function () {
-        return this.root;
-    };
-
-    this.getNumChildren = function () {
-        return this.childrenIDs.length;
-    };
-
     this._getMaximumInformation = function (nodeID) {
         if (this.childrenDescription.hasOwnProperty(nodeID)) {
             return this.childrenDescription[nodeID];
@@ -86,7 +74,7 @@ function Tree() {
         }
     };
 
-    this._buildBasicChildrenInformationrray = function () {
+    this._buildBasicChildrenInformationArray = function () {
         return _.map(self.childrenIDs, function (id) {
             return self.basicChildrenInformation[id];
         });
@@ -95,7 +83,7 @@ function Tree() {
     this.fetchBasicChildrenInformation = function (onSucess) {
         this._fetchBasicChildrenInformation(function (children) {
             self._processBasicChildrenInformationCallback(children);
-            var infoArray = self._buildBasicChildrenInformationrray();
+            var infoArray = self._buildBasicChildrenInformationArray();
             onSucess(infoArray);
         });
     };
@@ -143,7 +131,7 @@ function Tree() {
             // Convert string ID to integer ID
             // Replace key as id in child object, for consistency
             child.id = parseInt(child.key);
-            delete child.key
+            delete child.key;
 
             self.childrenIDs.push(child.id);
             self.basicChildrenInformation[child.id] = child;
@@ -156,7 +144,7 @@ function Tree() {
 
     this._fetchBasicChildrenInformation = function (callback) {
         if (this.rootID === 0) {
-            this._fetchRootNodesBasicInformation(callback);;
+            this._fetchRootNodesBasicInformation(callback);
         } else {
             var baseUrl = "http://api.gbif.org/v0.9/species/";
             var completeUrl = baseUrl + this.rootID.toString() + '/children?limit=100';
@@ -192,7 +180,7 @@ function Tree() {
     this._buildUrl = function (ID) {
         var searchUrl = "http://api.gbif.org/v0.9/species/";
         return encodeURI(searchUrl + ID);
-    }
+    };
 
     this._fetchData = function (url, onSucess) {
         this._fetchMultipleData([url], onSucess);
