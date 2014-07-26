@@ -29,7 +29,7 @@ function getScientificName(data) {
     var name = data.scientificName;
 
     // Used when name has date and scientist attached
-    if (_.isDefined(data.authorship) && data.authorship !== "") {
+    if (data.authorship) {
         var index = name.indexOf(data.authorship);
         if (index !== -1) {
             // remove the space before the name too
@@ -48,53 +48,56 @@ function getCommonName(data) {
 // Data stuff
 
 function showInformation(data, tree) {
-    // Remove existing data, if it exists
-    d3.select('#speciesData').remove();
-
     setUpSidebar();
-
-    d3.select('#infoContainer')
-        .append('div')
-        .attr('id', 'speciesData')
-        .attr('class', 'verticalLine');
-
     showWikipediaInformation(data, tree);
 }
 
 
-
 function showWikipediaInformation(data, tree) {
-    var divSelection = d3.select('#speciesData');
-    putLoader(divSelection);
+    putLoader();
 
-    var wiki = new Wikipedia();
     var speciesName = getScientificName(data);
     var commonName = getCommonName(data);
+
+    var wiki = new Wikipedia();
     wiki.article(commonName, speciesName, function (data) {
-        removeLoader(divSelection);
-        if (_.isUndefined(data)) {
+        removeLoader();
+
+        var divSelection = d3.select('#speciesData');
+
+        if (data) {
+            addWikipediaTextToSelection(data, tree, divSelection);
+            addWikipediaImage(wiki, commonName, speciesName, divSelection);
+        } else {
             divSelection.append('h1').text('No available information');
-            return;
         }
-
-        var title = data.title;
-        var raw_content = data.extract;
-        var content = removeWikiCruft(raw_content);
-
-        var titleText = title + " (" + tree.getTaxon() + ')';
-        divSelection.append('h1').attr('class', 'header').text(titleText);
-        divSelection.append('div').attr('id', 'content').html(content);
-
-        wiki.image(commonName, speciesName, function (imagesData) {
-            var url = chooseImage(imagesData || []);
-            if (url) {
-                divSelection.insert('img', '#content')
-                    .attr('src', url)
-                    .attr('alt', 'image')
-                    .attr('class', 'ui huge image');
-            }
-        });
     });
+}
+
+function addWikipediaImage(wiki, commonName, speciesName, divSelection) {
+    wiki.image(commonName, speciesName, function (imagesData) {
+        var url = chooseImage(imagesData || []);
+        if (url) {
+            addWikipediaImageToSelection(divSelection, url);
+        }
+    });
+}
+
+function addWikipediaImageToSelection(divSelection, url) {
+    divSelection.insert('img', '#content')
+        .attr('src', url)
+        .attr('alt', 'image')
+        .attr('class', 'ui huge image');
+}
+
+function addWikipediaTextToSelection(data, tree, divSelection) {
+    var title = data.title;
+    var raw_content = data.extract;
+    var content = removeWikiCruft(raw_content);
+
+    var titleText = title + " (" + tree.getTaxon() + ')';
+    divSelection.append('h1').attr('class', 'header').text(titleText);
+    divSelection.append('div').attr('id', 'content').html(content);
 }
 
 function removeWikiCruft(text) {
@@ -123,7 +126,9 @@ function removeWikiCruft(text) {
 function chooseImage(imagesData) {
     for (var i = 0; i < imagesData.length; i++) {
         var image = imagesData[i];
+
         var title = image.title;
+
         var info = image.imageinfo[0];
         var mime = info.mime;
         var url = info.url;
@@ -160,7 +165,7 @@ function expandSuperTree(svgContainer, tree) {
 }
 
 function showChildren(data, svgContainer, tree) {
-    if (tree.isSpeciesLevel()) {
+    if (tree.isAtSpeciesLevel()) {
         console.info("Reached species level. Can't go down.");
         return;
     }
@@ -197,26 +202,28 @@ function addRemoveIconToSidebar() {
     d3.select('.sidebar').append('i')
         .attr('class', 'huge remove icon')
         .attr('id', 'removeIcon')
-        .on('click', function () {
-            hideSidebar();
-        });
+        .on('click',  hideSidebar);
+}
+
+function addSpeciesDataContainer() {
+    d3.select('#infoContainer').append('div').attr('id', 'speciesData');
 }
 
 function setUpSidebar() {
     removeSidebarContent();
     addRemoveIconToSidebar();
-    d3.select('#infoContainer').append('div').attr('id', 'speciesData');
+    addSpeciesDataContainer();
     showSidebar();
 }
 
 
 // Loader
-function putLoader(divSelection) {
-    divSelection.append('div').attr('class', 'ui active inline loader').attr('id', 'loader');
+function putLoader() {
+    d3.select('#speciesData').append('div').attr('class', 'ui active inline loader').attr('id', 'loader');
 }
 
-function removeLoader(divSelection) {
-    divSelection.select('#loader').remove();
+function removeLoader() {
+    d3.select('#speciesData').select('#loader').remove();
 }
 
 // Svg
@@ -255,30 +262,29 @@ function addNoInformationAvailableText(childrenSelection) {
         .attr('font-family', 'sans-serif')
         .attr('font-size', '20px')
         .attr('fill', 'rgb(83, 83, 83)')
-
 }
 
 function addRootCircle(svgContainer, tree) {
-    var isAtKingdomLevel = tree.isAtKingdomLevel();
-    var selection = d3.select("#speciesContainer");
+    var button = createRootButton(svgContainer);
 
-    var button = selection.append('div')
+    if (tree.isAtKingdomLevel()) {
+        button.attr('class', 'circular active big ui red button').text('Life');
+    } else {
+        button.attr('class', 'circular big ui red icon button');
+        button.append('i').attr('class', 'level up icon');
+    }
+}
+
+function createRootButton(svgContainer) {
+    return d3.select("#speciesContainer")
+        .append('div')
         .style('position', 'absolute')
         .style("left", rootCircleCenterXPos.toString() + 'px')
         .style("top", verticalMargin.toString() + 'px')
-        .attr('id', 'rootButton');
-
-    if (isAtKingdomLevel) {
-        button.attr('class', 'circular big ui red button')
-            .text('Life');
-    } else {
-        button.attr('class', 'circular active big ui red icon button')
-            .on("click", function (data) {
-                expandSuperTree(svgContainer, tree);
-            });
-
-        button.append('i').attr('class', 'level up icon');
-    }
+        .attr('id', 'rootButton')
+        .on("click", function (data) {
+            expandSuperTree(svgContainer, tree);
+        });
 }
 
 function addHorizontalLineFromCircle(svgContainer) {
@@ -342,7 +348,7 @@ function addChildrenTextButton(svgContainer, childrenData, tree) {
 }
 
 function addTextToButtons(buttons, svgContainer, tree) {
-    var isAtSpeciesLevel = tree.isSpeciesLevel();
+    var isAtSpeciesLevel = tree.isAtSpeciesLevel();
 
     var button = buttons.append('div');
     if (isAtSpeciesLevel) {
@@ -371,6 +377,7 @@ function addTextToButtons(buttons, svgContainer, tree) {
 }
 
 function addIconToButtons(buttons, tree) {
+
     buttons.append('div')
         .attr('class', 'ui green icon button')
         .on("click", function (data) {
