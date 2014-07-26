@@ -81,3 +81,6 @@ b {
 .ui.active.right.very.wide.sidebar {
     margin-left: calc(-100% + 800px) !important;
 }
+#speciesContainer {
+    position: relative;
+}
