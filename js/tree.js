@@ -31,14 +31,22 @@ function Tree() {
         return (this.parentIDs.length === 0);
     };
 
+    this.getParentInfo = function () {
+        if (!this.isAtKingdomLevel()) {
+            return _.last(self.parentInfo);
+        }
+    }
+
     this.getBasicInformation = function (id) {
-        if (id !== 0) {
-            return self.basicChildrenInformation[id];
-        } else {
+        if (id === 0) {
             return {
                 'id': 0,
                 'scientificName': 'Life'
             }
+        } else if (id === this.rootID) {
+            return this.root;
+        } else {
+            return self.basicChildrenInformation[id];
         }
     }
 
