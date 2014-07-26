@@ -10,9 +10,10 @@ var height = 500;
 var rootCircleRadius = 30;
 var rootCircleCenterXPos = 30;
 
+var verticalBarLength = 100;
 var verticalMargin = 30;
 
-var horizontalOffset = 100;
+var horizontalOffset = 150;
 var verticalBarXPos = rootCircleCenterXPos + rootCircleRadius + horizontalOffset;
 
 var barWidth = 100;
@@ -69,7 +70,7 @@ function showWikipediaInformation(data, tree) {
             addWikipediaTextToSelection(data, tree, divSelection);
             addWikipediaImage(wiki, commonName, speciesName, divSelection);
         } else {
-            divSelection.append('h1').text('No available information');
+            addNoAvailableInformationText(divSelection);
         }
     });
 }
@@ -91,6 +92,7 @@ function addWikipediaImageToSelection(divSelection, url) {
 }
 
 function addWikipediaTextToSelection(data, tree, divSelection) {
+    makeSidebarVeryWide();
     var title = data.title;
     var raw_content = data.extract;
     var content = removeWikiCruft(raw_content);
@@ -98,6 +100,11 @@ function addWikipediaTextToSelection(data, tree, divSelection) {
     var titleText = title + " (" + tree.getTaxon() + ')';
     divSelection.append('h1').attr('class', 'header').text(titleText);
     divSelection.append('div').attr('id', 'content').html(content);
+}
+
+function addNoAvailableInformationText(divSelection) {
+    makeSidebarSmall();
+    divSelection.append('h1').text('No available information');
 }
 
 function removeWikiCruft(text) {
@@ -171,6 +178,9 @@ function showChildren(data, svgContainer, tree) {
         return;
     }
 
+    hideSidebar();
+    setUpSidebar();
+
 
     tree.setRootToChild(data.id);
     tree.fetchBasicChildrenInformation(function (children) {
@@ -190,6 +200,16 @@ function scrollToTop() {
 }
 
 // Sidebar
+function makeSidebarVeryWide() {
+    d3.select('#infoContainer')
+        .attr('class', 'ui right very wide sidebar verticalLine active');
+}
+
+function makeSidebarSmall() {
+    d3.select('#infoContainer')
+        .attr('class', 'ui right sidebar verticalLine active');
+}
+
 function removeSidebarContent() {
     d3.selectAll('#speciesData').remove();
     d3.selectAll('#removeIcon').remove();
@@ -252,10 +272,18 @@ function resizeSvg(svgContainer, children) {
 function resizeSvgHeight(svgContainer, children) {
     // Distance between two children
     var contentHeight = Math.max(2 * rootCircleRadius, (children.length - 1) * heightBetweenChildren);
-    var marginHeight = 2 * verticalMargin;
+    var marginHeight = 2 * verticalMargin + verticalBarLength;
 
     height = contentHeight + marginHeight;
     svgContainer.attr('height', height);
+}
+
+function resizeSvgWidth(svgContainer) {
+    if (d3.select('#infoContainer').attr('class').indexOf('very wide') !== -1) {
+        d3.select('#speciesContainer').style('width', 'calc(70%)')
+    } else {
+        d3.select('#speciesContainer').style('width', width);
+    }
 }
 
 
@@ -263,7 +291,7 @@ function resizeSvgHeight(svgContainer, children) {
 function addNoInformationAvailableText(childrenSelection) {
     childrenSelection.append('text')
         .attr('x', verticalBarXPos + 10)
-        .attr('y', verticalMargin + 35)
+        .attr('y', verticalMargin + verticalBarLength + 35)
         .text('No available information')
         .attr('font-family', 'sans-serif')
         .attr('font-size', '20px')
@@ -271,36 +299,64 @@ function addNoInformationAvailableText(childrenSelection) {
 }
 
 function addRootCircle(svgContainer, tree) {
-    var button = createRootButton(svgContainer);
+    var selection = createRootDiv()
+    var button = createRootButton(selection, svgContainer);
 
     if (tree.isAtKingdomLevel()) {
-        button.attr('class', 'circular active big ui red button').text('Life');
+        button.attr('class', 'active big ui red button').text('Life');
     } else {
-        button.attr('class', 'circular big ui red icon button');
+        var name = getName(tree.root);
+        button.attr('class', 'big ui red icon button').text(name);
         button.append('i').attr('class', 'level up icon');
+
+        createRootInformationButton(selection, tree);
     }
 }
 
-function createRootButton(svgContainer) {
+function createRootDiv() {
     return d3.select("#speciesContainer")
         .append('div')
         .style('position', 'absolute')
         .style("left", rootCircleCenterXPos.toString() + 'px')
         .style("top", verticalMargin.toString() + 'px')
-        .attr('id', 'rootButton')
+        .attr('id', 'rootButton');
+}
+
+function createRootButton(selection, svgContainer) {
+    return selection
+        .append('div')
         .on("click", function (data) {
             expandSuperTree(svgContainer, tree);
         });
+}
+
+function createRootInformationButton(selection, tree) {
+    return selection.append('div')
+        .attr('class', 'big ui green icon button')
+        .on("click", function () {
+            showInformation(tree.root, tree);
+        })
+        .append('i')
+        .attr('class', 'icon info letter');
+
 }
 
 function addHorizontalLineFromCircle(svgContainer) {
     var height = svgContainer.attr('height');
 
     svgSelection.append('line')
-        .attr('x1', rootCircleCenterXPos + rootCircleRadius)
+        .attr('x1', rootCircleCenterXPos + 50)
         .attr('y1', verticalMargin + rootCircleRadius)
+        .attr('x2', rootCircleCenterXPos + 50)
+        .attr('y2', verticalMargin + rootCircleRadius + verticalBarLength)
+        .attr('stroke-width', 5)
+        .attr('stroke', 'black');
+
+    svgSelection.append('line')
+        .attr('x1', rootCircleCenterXPos + 50)
+        .attr('y1', verticalMargin + rootCircleRadius + verticalBarLength)
         .attr('x2', verticalBarXPos)
-        .attr('y2', verticalMargin + rootCircleRadius)
+        .attr('y2', verticalMargin + rootCircleRadius + verticalBarLength)
         .attr('stroke-width', 5)
         .attr('stroke', 'black');
 }
@@ -310,7 +366,7 @@ function addVerticalLine(svgContainer) {
 
     svgSelection.append('line')
         .attr('x1', verticalBarXPos)
-        .attr('y1', verticalMargin)
+        .attr('y1', verticalMargin + verticalBarLength)
         .attr('x2', verticalBarXPos)
         .attr('y2', height - verticalMargin)
         .attr('stroke-width', 5)
@@ -320,7 +376,7 @@ function addVerticalLine(svgContainer) {
 function addHorizontalBars(childrenSelection, numChildren) {
     for (var i = 0; i < numChildren; i++) {
         var height = i * heightBetweenChildren;
-        var yPos = height + verticalMargin;
+        var yPos = height + verticalMargin + verticalBarLength;
 
 
         childrenSelection.append('line')
@@ -344,7 +400,7 @@ function addChildrenTextButton(svgContainer, childrenData, tree) {
     buttons.style('position', 'absolute')
         .style('left', xPos.toString() + 'px')
         .style('top', function (data, index) {
-            var height = index * heightBetweenChildren + 8;
+            var height = index * heightBetweenChildren + verticalBarLength + 8;
             return height.toString() + 'px';
         })
         .attr('class', 'textButton');
