@@ -87,10 +87,12 @@ function showWikipediaInformation(data, tree) {
         divSelection.append('div').attr('id', 'content').html(content);
 
         wiki.image(commonName, speciesName, function (imagesData) {
-            console.log(imagesData);
             var url = chooseImage(imagesData || []);
-            if (typeof url !== "undefined") {
-                divSelection.insert('img', '#content').attr('src', url).attr('alt', 'image').attr('class', 'ui huge image');
+            if (url) {
+                divSelection.insert('img', '#content')
+                    .attr('src', url)
+                    .attr('alt', 'image')
+                    .attr('class', 'ui huge image');
             }
         });
     });
