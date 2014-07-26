@@ -229,6 +229,7 @@ function clearSvg(svgContainer) {
 
 function clearButtons() {
     d3.selectAll('.textButton').remove();
+    d3.select('#rootButton').remove();
 }
 
 function resizeSvg(svgContainer, children) {
@@ -258,16 +259,32 @@ function addNoInformationAvailableText(childrenSelection) {
 }
 
 function addRootCircle(svgContainer, tree) {
-    var height = svgContainer.attr('height');
+    var isAtKingdomLevel = tree.isAtKingdomLevel();
 
-    svgSelection.append('circle')
-        .attr("cx", rootCircleCenterXPos)
-        .attr("cy", verticalMargin + rootCircleRadius)
-        .attr("r", rootCircleRadius)
-        .style("fill", "green")
-        .on("click", function (data) {
-            expandSuperTree(data, svgContainer, tree);
-        });
+    var selection = d3.select("#speciesContainer");
+
+    // <div class="circular ui icon button">
+    //   <i class="icon settings"></i></div>
+    var xPos = rootCircleCenterXPos;
+    var yPos = verticalMargin;
+
+    var button = selection.append('div')
+        .style('position', 'absolute')
+        .style("left", xPos.toString() + 'px')
+        .style("top", yPos.toString() + 'px')
+        .attr('id', 'rootButton');
+
+    if (isAtKingdomLevel) {
+        button.attr('class', 'circular big ui red button')
+            .text('Life');
+    } else {
+        button.attr('class', 'circular active big ui red icon button')
+            .on("click", function (data) {
+                expandSuperTree(data, svgContainer, tree);
+            });
+
+        button.append('i').attr('class', 'level up icon');
+    }
 }
 
 function addHorizontalLineFromCircle(svgContainer) {
@@ -385,7 +402,6 @@ function sortByNumberDescendants(childrenData) {
 function addChildrenToSvg(svgContainer, tree, childrenData) {
     var childrenSelection = svgContainer.append('g').attr('id', 'childrenGroup');
     var numChildren = childrenData.length;
-    console.log(childrenData);
 
     if (numChildren === 0) {
         addNoInformationAvailableText(childrenSelection);
