@@ -1,7 +1,7 @@
 /*jslint browser: true, devel: true, nomen: true */
 function Wikipedia() {
     var self = this;
-    this.url_article = 'http://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exlimit=10&redirects=&titles=';
+    this.url_article = 'http://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exlimit=10&redirects&titles=';
     this.url_image = "http://en.wikipedia.org/w/api.php?action=query&redirects&generator=images&gimlimit=20&prop=imageinfo&iiprop=url|dimensions|mime&format=json&titles=";
 
 
@@ -94,7 +94,7 @@ function Wikipedia() {
             if (has_good_content(result)) {
                 onSuccess(result);
             } else {
-                self._makeRequestUntilGoodContent(_.tail(urls), onSuccess);
+                self._makeRequestUntilGoodContent(_.tail(urls), process_data, has_good_content, onSuccess);
             }
         });
     };
