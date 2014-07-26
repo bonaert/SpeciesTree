@@ -92,7 +92,6 @@ function addWikipediaImageToSelection(divSelection, url) {
 }
 
 function addWikipediaTextToSelection(data, tree, divSelection) {
-    makeSidebarVeryWide();
     var title = data.title;
     var raw_content = data.extract;
     var content = removeWikiCruft(raw_content);
@@ -200,14 +199,22 @@ function scrollToTop() {
 }
 
 // Sidebar
+function getSidebar() {
+    return d3.select('#infoContainer');
+}
+
 function makeSidebarVeryWide() {
-    d3.select('#infoContainer')
-        .attr('class', 'ui right very wide sidebar verticalLine active');
+    var sidebar = getSidebar();
+    if (sidebar.attr('class').indexOf('very wide') === -1) {
+        sidebar.attr('class', 'ui right very wide sidebar verticalLine active');
+    }
 }
 
 function makeSidebarSmall() {
-    d3.select('#infoContainer')
-        .attr('class', 'ui right sidebar verticalLine active');
+    var sidebar = getSidebar();
+    if (sidebar.attr('class').indexOf('very wide') !== -1) {
+        sidebar.attr('class', 'ui right sidebar verticalLine active');
+    }
 }
 
 function removeSidebarContent() {
@@ -236,7 +243,8 @@ function addSpeciesDataContainer() {
 }
 
 function setUpSidebar() {
-    removeSidebarContent();
+    makeSidebarVeryWide();
+    hideSidebar();
     addRemoveIconToSidebar();
     addSpeciesDataContainer();
     showSidebar();
