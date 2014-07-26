@@ -16,19 +16,18 @@ function Tree() {
     this.childrenIDs = [];
     this.isVirusChildren = false;
 
-    this._getMaximumInformation = function (nodeID) {
-        if (this.childrenDescription.hasOwnProperty(nodeID)) {
-            return this.childrenDescription[nodeID];
-        }
-        return this.basicChildrenInformation[nodeID];
-    };
-
-    this.isSpeciesLevel = function () {
-        return this.level === this.levels.length - 1;
-    };
+    this.baseUrl = "http://api.gbif.org/v0.9/species/";
 
     this.getTaxon = function () {
         return this.levels[this.level];
+    };
+
+    this.isAtSpeciesLevel = function () {
+        return this.level === this.levels.length - 1;
+    };
+
+    this.isAtKingdomLevel = function () {
+        return (this.parentIDs.length === 1);
     };
 
     this.setRootToChild = function (childID) {
@@ -47,8 +46,8 @@ function Tree() {
         }
     };
 
-    this.isAtKingdomLevel = function () {
-        return (this.parentIDs.length === 1);
+    this._getMaximumInformation = function (nodeID) {
+        return this.childrenDescription[nodeID] || this.basicChildrenInformation[nodeID];
     };
 
     this.setRootToParent = function () {
@@ -138,21 +137,23 @@ function Tree() {
         }
     };
 
-    this._fetchRootNodesBasicInformation = function (callback) {
-        $.getJSON('data/data.json', callback);
+    this.make_children_url = function () {
+        return self.baseUrl + this.rootID.toString() + '/children?limit=100';
     };
 
     this._fetchBasicChildrenInformation = function (callback) {
         if (this.rootID === 0) {
             this._fetchRootNodesBasicInformation(callback);
         } else {
-            var baseUrl = "http://api.gbif.org/v0.9/species/";
-            var completeUrl = baseUrl + this.rootID.toString() + '/children?limit=100';
-
+            var completeUrl = self.make_children_url();
             this._fetchData(completeUrl, function (data) {
                 callback(data[0].results);
             });
         }
+    };
+
+    this._fetchRootNodesBasicInformation = function (callback) {
+        $.getJSON('data/data.json', callback);
     };
 
     this._fetchChildrenData = function (onSuccess) {
@@ -178,8 +179,7 @@ function Tree() {
     };
 
     this._buildUrl = function (ID) {
-        var searchUrl = "http://api.gbif.org/v0.9/species/";
-        return encodeURI(searchUrl + ID);
+        return encodeURI(self.baseUrl + ID);
     };
 
     this._fetchData = function (url, onSucess) {
@@ -188,7 +188,8 @@ function Tree() {
 
     this._fetchMultipleData = function (urls, onSuccess) {
         var requests = this._makeAllRequests(urls);
-        var errorFunction = function () {};
+        var errorFunction = function () {
+        };
         $.when.all(requests).done(onSuccess, errorFunction);
     };
 
