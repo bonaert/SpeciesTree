@@ -333,11 +333,18 @@ function addChildrenTextButton(childrenSelection, svgContainer, childrenData, tr
 }
 
 function addTextToButtons(buttons, svgContainer, tree) {
+    var isAtSpeciesLevel = tree.isSpeciesLevel();
+
     var button = buttons.append('div')
-        .attr('class', 'ui blue labeled icon button')
-        .on('click', function (data) {
+    if (isAtSpeciesLevel) {
+        button.attr('class', 'ui active blue button');
+    } else {
+        button.attr('class', 'ui blue labeled icon button');
+        button.on('click', function (data) {
             showChildren(data, svgContainer, tree);
         });
+    }
+
 
 
     button.text(function (data) {
@@ -349,7 +356,9 @@ function addTextToButtons(buttons, svgContainer, tree) {
         return width.toString() + 'px';
     })
 
-    button.append('i').attr('class', 'level down icon');
+    if (!isAtSpeciesLevel) {
+        button.append('i').attr('class', 'level down icon');
+    }
 }
 
 function addIconToButtons(buttons, tree) {
