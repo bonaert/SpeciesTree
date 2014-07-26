@@ -6,27 +6,18 @@ function Wikipedia() {
 
 
     this.article = function (commonName, speciesName, onSuccess) {
-        var names = _.unique([commonName, speciesName]);
+        var names = this._get_good_names([commonName, speciesName]);
         var urls = self._build_urls(names, self._makeArticleUrl);
-        self._makeRequestUntilGoodContent(urls, self.processArticle, self._hasGoodContent, onSuccess);
+        self._makeRequestUntilGoodContent(urls, self.processArticle, self._ArticleHasGoodContent, onSuccess);
     };
 
-    this._makeArticleUrl = function (name) {
-        return encodeURI(self.url_article + name + '&callback=?');
+    this.image = function (commonName, speciesName, onSuccess) {
+        var names = this._get_good_names([commonName, speciesName]);
+        var urls = self._build_urls(names, self._makeImageUrl);
+        self._makeRequestUntilGoodContent(urls, self.process_image, self._imageHasGoodContent, onSuccess);
     };
 
-    this._hasGoodContent = function (result) {
-        if (_.isUndefined(result) || _.isUndefined(result.extract)) {
-            // No content
-            return false;
-        } else if (result.extract.indexOf('may refer') !== -1) {
-            // Content is a disambiguation page
-            return false;
-        } else {
-            return true;
-        }
-    };
-
+    // Process data
     this.processArticle = function (data) {
         var pages = data.query.pages;
         var content_keys = self._getContentKeys(pages);
@@ -37,31 +28,6 @@ function Wikipedia() {
         }
 
         return pages[content_keys[0]];
-    };
-
-    this._getContentKeys = function (result) {
-        var keys = _.keys(result);
-        return _.filter(keys, function (key) {
-            return (key !== -1) && _.isDefined(result[key].extract);
-        });
-    };
-
-    this._isNoContent = function (content_keys, pages) {
-        return content_keys.length === 0 && _.isDefined(pages[-1]) && (pages[-1].missing === "");
-    };
-
-    this.image = function (commonName, speciesName, onSuccess) {
-        var names = _.unique([commonName, speciesName]);
-        var urls = self._build_urls(names, self._makeImageUrl);
-        self._makeRequestUntilGoodContent(urls, self.process_image, self._imageHasGoodContent, onSuccess);
-    };
-
-    this._imageHasGoodContent = function (result) {
-        return _.isDefined(result);
-    };
-
-    this._makeImageUrl = function (name) {
-        return encodeURI(self.url_image + name + '&callback=?');
     };
 
     this.process_image = function (data) {
@@ -79,6 +45,58 @@ function Wikipedia() {
         });
     };
 
+    this._getContentKeys = function (result) {
+        var keys = _.keys(result);
+        return _.filter(keys, function (key) {
+            return (key !== -1) && _.isDefined(result[key].extract);
+        });
+    };
+
+    this._isNoContent = function (content_keys, pages) {
+        return content_keys.length === 0 && _.isDefined(pages[-1]) && (pages[-1].missing === "");
+    };
+
+
+    // Good content check
+    this._ArticleHasGoodContent = function (result) {
+        if (_.isUndefined(result) || _.isUndefined(result.extract)) {
+            // No content
+            return false;
+        } else if (result.extract.indexOf('may refer') !== -1) {
+            // Content is a disambiguation page
+            return false;
+        } else {
+            return true;
+        }
+    };
+
+    this._imageHasGoodContent = function (result) {
+        return !_.isUndefined(result);
+    };
+
+
+    // Filter
+    this._get_good_names = function (names) {
+        var defined_names = _.select(names, _.identity);
+        return _.unique(defined_names);
+    };
+
+
+    // Url
+    this._build_urls = function (names, make_url) {
+        return _.map(names, make_url);
+    };
+
+    this._makeArticleUrl = function (name) {
+        return encodeURI(self.url_article + name + '&callback=?');
+    };
+
+    this._makeImageUrl = function (name) {
+        return encodeURI(self.url_image + name + '&callback=?');
+    };
+
+
+    // General function
     this._makeRequestUntilGoodContent = function (urls, process_data, has_good_content, onSuccess) {
         if (urls.length === 0) {
             onSuccess(undefined);
@@ -94,11 +112,6 @@ function Wikipedia() {
                 self._makeRequestUntilGoodContent(_.tail(urls), process_data, has_good_content, onSuccess);
             }
         });
-    };
-
-    this._build_urls = function (names, make_url) {
-        var defined_names = _.filter(names, _.isDefined);
-        return _.map(defined_names, make_url);
     };
 
     this._makeRequest = function (url, onSuccess) {
