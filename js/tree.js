@@ -9,7 +9,8 @@ function Tree() {
         'id': 0,
         'scientificName': 'Life'
     };
-    this.parentIDs = [0];
+    this.parentIDs = [];
+    this.parentInfo = [];
 
     this.basicChildrenInformation = {};
     this.childrenDescription = {};
@@ -27,11 +28,23 @@ function Tree() {
     };
 
     this.isAtKingdomLevel = function () {
-        return (this.parentIDs.length === 1);
+        return (this.parentIDs.length === 0);
     };
+
+    this.getBasicInformation = function (id) {
+        if (id !== 0) {
+            return self.basicChildrenInformation[id];
+        } else {
+            return {
+                'id': 0,
+                'scientificName': 'Life'
+            }
+        }
+    }
 
     this.setRootToChild = function (childID) {
         this.parentIDs.push(this.rootID);
+        this.parentInfo.push(this.getBasicInformation(this.rootID));
 
         this.rootID = childID;
         this.root = this._getMaximumInformation(childID);
@@ -58,10 +71,7 @@ function Tree() {
 
         var parentID = this.parentIDs.pop();
         this.rootID = parentID;
-        this.root = {
-            'id': parentID,
-            'scientificName': 'No idea! See tree.setRootToParent function'
-        };
+        this.root = this.parentInfo.pop();
         this.basicChildrenInformation = {};
         this.childrenDescription = {};
         this.childrenIDs = [];
@@ -188,8 +198,7 @@ function Tree() {
 
     this._fetchMultipleData = function (urls, onSuccess) {
         var requests = this._makeAllRequests(urls);
-        var errorFunction = function () {
-        };
+        var errorFunction = function () {};
         $.when.all(requests).done(onSuccess, errorFunction);
     };
 
