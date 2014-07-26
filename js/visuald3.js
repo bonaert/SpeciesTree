@@ -17,7 +17,7 @@ var verticalMargin = 30;
 var horizontalOffset = 100;
 var verticalBarXPos = rootCircleCenterXPos + rootCircleRadius + horizontalOffset;
 
-var textOffset = 30;
+var barTextOffset = 10;
 var barWidth = 100;
 
 // Distance between two children
@@ -43,6 +43,11 @@ function getScientificName(data) {
     return name;
 }
 
+function getCommonName(data) {
+    return data.vernacularName || data.canonicalName;
+}
+
+
 // Data stuff
 
 function showInformation(data, tree) {
@@ -65,11 +70,10 @@ function showWikipediaInformation(data, tree) {
 
     var wiki = new Wikipedia();
     var speciesName = getScientificName(data);
-    var commonName = data.vernacularName;
+    var commonName = getCommonName(data);
     wiki.article(commonName, speciesName, function (data) {
         removeLoader(divSelection);
-        console.log(data);
-        if (typeof data === "undefined") {
+        if (_.isUndefined(data)) {
             divSelection.append('h1').text('No available information');
             return;
         }
@@ -123,8 +127,10 @@ function chooseImage(imagesData) {
         var url = image.imageinfo[0].url;
         var size = image.imageinfo[0].size;
 
-        // For speacial wikipedia icons, video and audio
-        if (containsAny(title, filterList) || containsAny(url, filterList) || mime.indexOf('application') !== -1) {
+        // For unwanted images, such as wikipedia icons, portal images and some maps
+        if (containsAny(title, filterList) || containsAny(url, filterList)) {
+            continue;
+        } else if (mime.indexOf('application') !== -1 || mime.indexOf('tif') !== -1) {
             continue;
         }
 
@@ -219,6 +225,10 @@ function clearSvg(svgContainer) {
     svgContainer.selectAll('line').remove();
 }
 
+function clearButtons() {
+    d3.selectAll('.textButton').remove();
+}
+
 function resizeSvg(svgContainer, children) {
     resizeSvgHeight(svgContainer, children);
 }
@@ -298,57 +308,56 @@ function addHorizontalBars(childrenSelection, numChildren) {
     }
 }
 
-function addCircles(childrenSelection, childrenData, tree) {
-    var circles = childrenSelection.selectAll('image')
+function addChildrenTextButton(childrenSelection, svgContainer, childrenData, tree) {
+    var selection = d3.select("#speciesContainer");
+    var buttons = selection.selectAll('.textButton')
         .data(childrenData)
         .enter()
-        .append('image');
+        .append('div');
 
-    var num = 0;
-    var remainingSpace = height - 2 * verticalMargin;
-
-    var circleAttributes = circles
-        .attr('x', verticalBarXPos + barWidth - 10)
-        .attr('y', function (data, index) {
+    buttons.style('position', 'absolute')
+        .style('left', function (data) {
+            var xPos = verticalBarXPos + barWidth;
+            return xPos.toString() + 'px';
+        }).style('top', function (data, index) {
             var height = index * heightBetweenChildren;
-            var yPos = height + verticalMargin - 15;
-            return yPos;
+            var yPos = height + 8;
+            return yPos.toString() + 'px';
         })
-        .attr('height', 30)
-        .attr('width', 30)
-        .attr('xlink:href', 'image/info.png')
-        .on("click", function (data) {
-            showInformation(data, tree);
-        });
+        .attr('class', 'textButton');
+
+    addTextToButtons(buttons, svgContainer, tree);
+    addIconToButtons(buttons, tree);
 }
 
-function addText(svgContainer, tree, childrenSelection, childrenData) {
-    var text = childrenSelection.selectAll("text")
-        .data(childrenData)
-        .enter()
-        .append("text");
-
-    var textAttributes = text
-        .attr('x', verticalBarXPos + barWidth + textOffset)
-        .attr('y', function (data, index) {
-            var height = index * heightBetweenChildren;
-            var textAdjustment = 6;
-            var yPos = height + verticalMargin + textAdjustment;
-            return yPos;
-        })
-        .text(function (data) {
-            var text = capitalise(getName(data));
-            if (data.numDescendants !== 0 && data.numDescendants !== undefined) {
-                var text = text + ' (' + data.numDescendants + ' descendants)'
-            }
-            return text;
-        })
-        .attr('font-family', 'sans-serif')
-        .attr('font-size', '20px')
-        .attr('fill', 'rgb(83, 83, 83)')
+function addTextToButtons(buttons, svgContainer, tree) {
+    var button = buttons.append('div')
+        .attr('class', 'ui blue labeled icon button')
         .on('click', function (data) {
             showChildren(data, svgContainer, tree);
         });
+
+
+    button.text(function (data) {
+        var text = getName(data);
+        return capitalise(text);
+    }).style('width', function (data) {
+        var text = getName(data);
+        var width = Math.max(200, text.length * 15 + 20);
+        return width.toString() + 'px';
+    })
+
+    button.append('i').attr('class', 'level down icon');
+}
+
+function addIconToButtons(buttons, tree) {
+    buttons.append('div')
+        .attr('class', 'ui green icon button')
+        .on("click", function (data) {
+            showInformation(data, tree);
+        })
+        .append('i')
+        .attr('class', 'icon info letter');
 }
 
 function sortByNumberDescendants(childrenData) {
@@ -371,15 +380,14 @@ function addChildrenToSvg(svgContainer, tree, childrenData) {
         addNoInformationAvailableText(childrenSelection);
     } else {
         childrenData = sortByNumberDescendants(childrenData);
-
         addHorizontalBars(childrenSelection, numChildren);
-        addCircles(childrenSelection, childrenData, tree);
-        addText(svgContainer, tree, childrenSelection, childrenData);
+        addChildrenTextButton(childrenSelection, svgContainer, childrenData, tree);
     }
 }
 
 function addChildren(svgContainer, tree, children) {
-    clearSvg(svgContainer)
+    clearSvg(svgContainer);
+    clearButtons();
     resizeSvg(svgContainer, children);
     addRootCircle(svgContainer, tree);
     addHorizontalLineFromCircle(svgContainer);
