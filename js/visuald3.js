@@ -157,6 +157,7 @@ function expandSuperTree(svgContainer, tree) {
     }
 
     hideSidebar();
+    scrollToTop();
 
     tree.setRootToParent();
     tree.fetchBasicChildrenInformation(function (children) {
@@ -170,18 +171,23 @@ function showChildren(data, svgContainer, tree) {
         return;
     }
 
-    hideSidebar();
 
     tree.setRootToChild(data.id);
     tree.fetchBasicChildrenInformation(function (children) {
+        scrollToTop();
         addChildren(svgContainer, tree, children);
+        showInformation(data, tree);
     });
 }
 
 
 
 // UI Stuff
-
+function scrollToTop() {
+    $('html, body').animate({
+        scrollTop: 0
+    }, 'fast');
+}
 
 // Sidebar
 function removeSidebarContent() {
@@ -202,7 +208,7 @@ function addRemoveIconToSidebar() {
     d3.select('.sidebar').append('i')
         .attr('class', 'huge remove icon')
         .attr('id', 'removeIcon')
-        .on('click',  hideSidebar);
+        .on('click', hideSidebar);
 }
 
 function addSpeciesDataContainer() {
@@ -367,7 +373,7 @@ function addTextToButtons(buttons, svgContainer, tree) {
         return capitalise(text);
     }).style('width', function (data) {
         var text = getName(data);
-        var width = Math.max(200, text.length * 15 + 20);
+        var width = Math.max(200, text.length * 12 + 90);
         return width.toString() + 'px';
     });
 
