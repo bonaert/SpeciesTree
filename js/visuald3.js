@@ -48,6 +48,14 @@ function getCommonName(data) {
 
 // Data stuff
 
+function setSidebarDatum(value) {
+    d3.select('#infoContainer').datum(value);
+};
+
+function getSidebarDatum() {
+    return d3.select('#infoContainer').datum();
+}
+
 function showInformation(data, tree) {
     setUpSidebar();
     showWikipediaInformation(data, tree);
@@ -55,21 +63,24 @@ function showInformation(data, tree) {
 
 
 function showWikipediaInformation(data, tree) {
-    putLoader();
+    putWikipediaInfoLoader();
 
     var speciesName = getScientificName(data);
     var commonName = getCommonName(data);
+    var ID = data.id;
 
     var wiki = new Wikipedia();
     wiki.article(commonName, speciesName, function (data) {
-        removeLoader();
+        removeWikipediaInfoLoader();
 
         var divSelection = d3.select('#speciesData');
 
         if (data) {
+            setSidebarDatum(ID);
             addWikipediaTextToSelection(data, tree, divSelection);
             addWikipediaImage(wiki, commonName, speciesName, divSelection);
         } else {
+            setSidebarDatum(0);
             addNoAvailableInformationText(divSelection);
         }
     });
@@ -102,7 +113,7 @@ function addWikipediaTextToSelection(data, tree, divSelection) {
 }
 
 function addNoAvailableInformationText(divSelection) {
-    makeSidebarSmall();
+    //makeSidebarSmall();
     divSelection.append('h1').text('No available information');
 }
 
@@ -167,6 +178,9 @@ function expandSuperTree(svgContainer, tree) {
     scrollToTop();
 
     tree.setRootToParent();
+
+    addRoot(svgContainer, tree);
+
     tree.fetchBasicChildrenInformation(function (children) {
         addChildren(svgContainer, tree, children);
     });
@@ -178,16 +192,21 @@ function showChildren(data, svgContainer, tree) {
         return;
     }
 
-    removeSidebarContent();
-    hideSidebar();
-    setUpSidebar();
-
-
-    tree.setRootToChild(data.id);
-    tree.fetchBasicChildrenInformation(function (children) {
+    var ID = data.id;
+    if (getSidebarDatum() !== ID) {
         scrollToTop();
+        hideSidebar();
+    }
+
+    tree.setRootToChild(ID);
+
+    addRoot(svgContainer, tree);
+
+    tree.fetchBasicChildrenInformation(function (children) {
         addChildren(svgContainer, tree, children);
-        showInformation(data, tree);
+        if (getSidebarDatum() !== ID) {
+            showInformation(data, tree);
+        }
     });
 }
 
@@ -209,20 +228,6 @@ function sidebarIsSmall() {
     return getSidebar().attr('class').indexOf('very wide') === -1;
 }
 
-function makeSidebarVeryWide() {
-    var sidebar = getSidebar();
-    if (sidebarIsSmall()) {
-        sidebar.attr('class', 'ui right very wide sidebar verticalLine active');
-    }
-}
-
-function makeSidebarSmall() {
-    var sidebar = getSidebar();
-    if (!sidebarIsSmall()) {
-        sidebar.attr('class', 'ui right sidebar verticalLine active');
-    }
-}
-
 function removeSidebarContent() {
     d3.selectAll('#speciesData').remove();
     d3.selectAll('#removeIcon').remove();
@@ -237,47 +242,69 @@ function hideSidebar() {
 }
 
 function collapseSidebar() {
+    setSidebarDatum(0);
     removeSidebarContent();
     hideSidebar();
 }
 
 function addRemoveIconToSidebar() {
-    getSidebar().append('i')
-        .attr('class', 'huge remove icon')
+    getSidebar()
+        .append('div')
+        .attr('class', 'ui black icon button')
         .attr('id', 'removeIcon')
-        .on('click', collapseSidebar);
+        .style('margin-top', '20px')
+        .on('click', collapseSidebar)
+        .append('i')
+        .attr('class', 'remove icon');
 }
 
 function addSpeciesDataContainer() {
     getSidebar().append('div').attr('id', 'speciesData');
 }
 
-function prepareSidebar() {
+
+function setUpSidebar() {
+    removeSidebarContent();
     addRemoveIconToSidebar();
     addSpeciesDataContainer();
     showSidebar();
 }
 
-function setUpSidebar() {
-    removeSidebarContent();
-
-    if (sidebarIsSmall()) {
-        makeSidebarVeryWide();
-        hideSidebar();
-        window.setTimeout(prepareSidebar, 700);
-    } else {
-        prepareSidebar();
-    }
-}
-
 
 // Loader
-function putLoader() {
-    d3.select('#speciesData').append('div').attr('class', 'ui active inline loader').attr('id', 'loader');
+function putWikipediaInfoLoader() {
+    var div = d3.select('#speciesData')
+        .append('div')
+        .attr('id', 'infoLoader')
+        .style('width', '50%')
+        .style('margin', '0 auto')
+
+    div.append('div').attr('class', 'ui large active inline loader')
+    div.append('b').style('margin-left', '20px').text('Fetching information...');
+
+};
+
+
+function removeWikipediaInfoLoader() {
+    d3.select('#speciesData').select('#infoLoader').remove();
 }
 
-function removeLoader() {
-    d3.select('#speciesData').select('#loader').remove();
+function putChildrenLoader() {
+    var selection = d3.select('#speciesContainer');
+
+    var xPos = verticalBarXPos + barWidth;
+    var yPos = verticalBarLength + 100;
+
+    selection.append('div')
+        .attr('class', 'ui active large inline loader')
+        .style('position', 'absolute')
+        .style('left', xPos.toString() + 'px')
+        .style('top', yPos.toString() + 'px')
+        .attr('id', 'graphLoader')
+}
+
+function removeChildrenLoader() {
+    d3.select('#graphLoader').remove();
 }
 
 // Svg
@@ -306,15 +333,6 @@ function resizeSvgHeight(svgContainer, children) {
     svgContainer.attr('height', height);
 }
 
-function resizeSvgWidth(svgContainer) {
-    if (d3.select('#infoContainer').attr('class').indexOf('very wide') !== -1) {
-        d3.select('#speciesContainer').style('width', 'calc(70%)')
-    } else {
-        d3.select('#speciesContainer').style('width', width);
-    }
-}
-
-
 // Graph UI
 function addNoInformationAvailableText(childrenSelection) {
     childrenSelection.append('text')
@@ -327,7 +345,7 @@ function addNoInformationAvailableText(childrenSelection) {
 }
 
 function addRootCircle(svgContainer, tree) {
-    var selection = createRootDiv()
+    var selection = createRootDiv();
     var button = createRootButton(selection, svgContainer);
 
     if (tree.isAtKingdomLevel()) {
@@ -369,7 +387,7 @@ function createRootInformationButton(selection, tree) {
 
 }
 
-function addHorizontalLineFromCircle(svgContainer) {
+function addLinesFromRootToVerticalBar(svgContainer) {
     var height = svgContainer.attr('height');
 
     svgSelection.append('line')
@@ -501,12 +519,17 @@ function addChildrenToSvg(svgContainer, tree, childrenData) {
     }
 }
 
-function addChildren(svgContainer, tree, children) {
+function addRoot(svgContainer, tree) {
     clearSvg(svgContainer);
     clearButtons();
-    resizeSvg(svgContainer, children);
     addRootCircle(svgContainer, tree);
-    addHorizontalLineFromCircle(svgContainer);
+    addLinesFromRootToVerticalBar(svgContainer);
+    putChildrenLoader();
+}
+
+function addChildren(svgContainer, tree, children) {
+    removeChildrenLoader();
+    resizeSvg(svgContainer, children);
     addVerticalLine(svgContainer);
     addChildrenToSvg(svgContainer, tree, children);
 }
@@ -517,6 +540,7 @@ var svgSelection = selection.append("svg")
     .attr('height', height);
 
 var tree = new Tree();
+addRoot(svgSelection, tree);
 tree.fetchBasicChildrenInformation(function (children) {
     addChildren(svgSelection, tree, children);
 });
