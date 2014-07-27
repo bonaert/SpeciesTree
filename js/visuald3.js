@@ -162,6 +162,7 @@ function expandSuperTree(svgContainer, tree) {
         return;
     }
 
+    removeSidebarContent();
     hideSidebar();
     scrollToTop();
 
@@ -177,6 +178,7 @@ function showChildren(data, svgContainer, tree) {
         return;
     }
 
+    removeSidebarContent();
     hideSidebar();
     setUpSidebar();
 
@@ -203,16 +205,20 @@ function getSidebar() {
     return d3.select('#infoContainer');
 }
 
+function sidebarIsSmall() {
+    return getSidebar().attr('class').indexOf('very wide') === -1;
+}
+
 function makeSidebarVeryWide() {
     var sidebar = getSidebar();
-    if (sidebar.attr('class').indexOf('very wide') === -1) {
+    if (sidebarIsSmall()) {
         sidebar.attr('class', 'ui right very wide sidebar verticalLine active');
     }
 }
 
 function makeSidebarSmall() {
     var sidebar = getSidebar();
-    if (sidebar.attr('class').indexOf('very wide') !== -1) {
+    if (!sidebarIsSmall()) {
         sidebar.attr('class', 'ui right sidebar verticalLine active');
     }
 }
@@ -227,27 +233,41 @@ function showSidebar() {
 }
 
 function hideSidebar() {
-    removeSidebarContent();
     $('.sidebar').sidebar('hide');
 }
 
+function collapseSidebar() {
+    removeSidebarContent();
+    hideSidebar();
+}
+
 function addRemoveIconToSidebar() {
-    d3.select('.sidebar').append('i')
+    getSidebar().append('i')
         .attr('class', 'huge remove icon')
         .attr('id', 'removeIcon')
-        .on('click', hideSidebar);
+        .on('click', collapseSidebar);
 }
 
 function addSpeciesDataContainer() {
-    d3.select('#infoContainer').append('div').attr('id', 'speciesData');
+    getSidebar().append('div').attr('id', 'speciesData');
 }
 
-function setUpSidebar() {
-    makeSidebarVeryWide();
-    hideSidebar();
+function prepareSidebar() {
     addRemoveIconToSidebar();
     addSpeciesDataContainer();
     showSidebar();
+}
+
+function setUpSidebar() {
+    removeSidebarContent();
+
+    if (sidebarIsSmall()) {
+        makeSidebarVeryWide();
+        hideSidebar();
+        window.setTimeout(prepareSidebar, 700);
+    } else {
+        prepareSidebar();
+    }
 }
 
 
