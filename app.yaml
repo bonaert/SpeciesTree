@@ -3,27 +3,23 @@ version: 1
 runtime: python27
 api_version: 1
 threadsafe: true
+default_expiration: "30d"
 
 handlers:
 - url: /css
   static_dir: css
-  default_expiration: "30d"
 
 - url: /data
   static_dir: data
-  default_expiration: "30d"
 
 - url: /image
   static_dir: image
-  default_expiration: "30d"
 
 - url: /js
   static_dir: js
-  default_expiration: "30d"
 
 - url: /semantic
   static_dir: semantic
-  default_expiration: "30d"
 
 - url: /.*
   script: speciesexplorer.application
