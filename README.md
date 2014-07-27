@@ -4,11 +4,10 @@ SpeciesTree
 A tree of life vizualization, still in early stages.
 
 
-Preview
-==============
+Latest Preview
+=================================================
 
-![New Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/newpreview.png)
-
+![Latest Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/newestpreview.png)
 
 
 
@@ -17,4 +16,11 @@ Preview
 Old Preview
 ==============
 
-![Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/preview.png)
+![Old Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/newpreview.png)
+
+
+
+Very Old Preview
+==============
+
+![Very Old Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/preview.png)
