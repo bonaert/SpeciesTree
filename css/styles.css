@@ -71,7 +71,7 @@ b {
 
 .ui.very.wide.sidebar {
     width: calc(100% - 800px) !important;
-    margin-left: calc(100% - 800px) !important;
+    margin-left: calc(800px - 100%) !important;
     padding-left: 10px;
     background: #fff;
 }
@@ -79,7 +79,7 @@ b {
     margin-left: 0px !important;
 }
 .ui.active.right.very.wide.sidebar {
-    margin-left: calc(-100% + 800px) !important;
+    margin-left: calc(800px - 100%) !important;
 }
 #speciesContainer {
     position: relative;
