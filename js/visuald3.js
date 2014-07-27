@@ -49,11 +49,13 @@ function getCommonName(data) {
 // Data stuff
 
 function setSidebarDatum(value) {
+    // Binds data to the sidebar. The data is [id, has_wikipedia_content]. This allows us
+    // to not reload data when we go into sublevel if sidebar has already the correct data
     d3.select('#infoContainer').datum(value);
 };
 
 function getSidebarDatum() {
-    return d3.select('#infoContainer').datum();
+    return d3.select('#infoContainer').datum() || [-1, false];
 }
 
 function showInformation(data, tree) {
@@ -76,11 +78,11 @@ function showWikipediaInformation(data, tree) {
         var divSelection = d3.select('#speciesData');
 
         if (data) {
-            setSidebarDatum(ID);
+            setSidebarDatum([ID, true]);
             addWikipediaTextToSelection(data, tree, divSelection);
             addWikipediaImage(wiki, commonName, speciesName, divSelection);
         } else {
-            setSidebarDatum(0);
+            setSidebarDatum([ID, false]);
             addNoAvailableInformationText(divSelection);
         }
     });
@@ -193,7 +195,10 @@ function showChildren(data, svgContainer, tree) {
     }
 
     var ID = data.id;
-    if (getSidebarDatum() !== ID) {
+    var sidebarDatum = getSidebarDatum();
+    var sidebarSpeciesID = sidebarDatum && sidebarDatum[0],
+        wikipediaHasInformation = sidebarDatum[1];
+    if (sidebarSpeciesID !== ID || !wikipediaHasInformation) {
         scrollToTop();
         hideSidebar();
     }
@@ -204,7 +209,7 @@ function showChildren(data, svgContainer, tree) {
 
     tree.fetchBasicChildrenInformation(function (children) {
         addChildren(svgContainer, tree, children);
-        if (getSidebarDatum() !== ID) {
+        if (sidebarSpeciesID !== ID) {
             showInformation(data, tree);
         }
     });
@@ -242,7 +247,7 @@ function hideSidebar() {
 }
 
 function collapseSidebar() {
-    setSidebarDatum(0);
+    setSidebarDatum([0, false]);
     removeSidebarContent();
     hideSidebar();
 }
