@@ -1,0 +1,24 @@
+application: species-explorer
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /css
+  static_dir: css
+
+- url: /data
+  static_dir: data
+
+- url: /image
+  static_dir: image
+
+- url: /js
+  static_dir: js
+
+- url: /semantic
+  static_dir: semantic
+
+- url: /.*
+  script: speciesexplorer.application
