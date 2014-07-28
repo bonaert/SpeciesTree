@@ -59,17 +59,8 @@ function getInformationPaneDatum() {
 }
 
 function showInformation(data, tree, scrollToInformationPanel) {
-    var informationPaneDatum = getInformationPaneDatum();
-    var currentSpeciesID = informationPaneDatum[0];
-
-    if (currentSpeciesID !== data.id) {
-        setUpInformationPanel();
-        showWikipediaInformation(data, tree, scrollToInformationPanel);
-    } else if (currentSpeciesID === data.id && sidebarExists()) {
-        showSidebar();
-    } else if (currentSpeciesID === data.id && !sidebarExists()) {
-        scrollToInformationPane();
-    }
+   setUpInformationPanel();
+   showWikipediaInformation(data, tree, scrollToInformationPanel);
 }
 
 function showWikipediaInformation(data, tree, scrollToInformationPanel) {
@@ -267,6 +258,7 @@ function getInformationPanel() {
 function removeInformationPanelContent() {
     d3.selectAll('#speciesData').remove();
     d3.selectAll('#removeIcon').remove();
+
 }
 
 function collapseInformationPanel() {
