@@ -8,7 +8,7 @@ class GoogleWebmasterVerifier(webapp2.RequestHandler):
     def get(self):
         self.response.write(file('google7e0693b4ccda33f7.html').read())
 
-class GoogleWebmasterVerifier(webapp2.RequestHandler):
+class SiteMapHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write(file('sitemap.xml').read())
 
