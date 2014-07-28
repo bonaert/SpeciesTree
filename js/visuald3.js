@@ -101,7 +101,7 @@ function addWikipediaImage(wiki, commonName, speciesName, divSelection) {
 
 function addWikipediaImageToSelection(divSelection, commonName, speciesName, url) {
     divSelection.insert('img', '#content')
-        .attr('src', url + 'asdasdasdasd')
+        .attr('src', url)
         .attr('alt', commonName + ' - ' + speciesName + ' (' + tree.getTaxon() + ')')
         .attr('class', 'ui huge image');
 }
