@@ -238,6 +238,8 @@ function removeSidebarContent() {
     d3.selectAll('#removeIcon').remove();
 }
 
+// The info panel can be a sidebar if the window width is large enough
+// If it is, we use some animations.
 function showSidebar() {
     $('.sidebar').sidebar('show');
 }
@@ -543,6 +545,17 @@ var selection = d3.select("#speciesContainer");
 var svgSelection = selection.append("svg")
     .attr('width', width)
     .attr('height', height);
+
+var body = d3.select('body');
+var windowWidth = $(window).width();
+if (windowWidth > 1000) {
+    body.insert('div', '#speciesContainer')
+        .attr('id', 'infoContainer')
+        .attr('class', 'ui right very wide sidebar verticalLine');
+} else {
+    body.insert('div', '.ui.info.message')
+        .attr('id', 'infoContainer');
+}
 
 var tree = new Tree();
 addRoot(svgSelection, tree);
