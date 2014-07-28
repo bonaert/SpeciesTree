@@ -11,12 +11,25 @@ function Wikipedia() {
     this.image_cache = {};
 
     this._get_from_cache = function (cache, names) {
+        var no_good_information = false;
+
         for (var i = 0; i < names.length; i++) {
             var name = names[i];
-            if (cache[name]) {
+            var cached = cache[name];
+            if (cached && cached !== self.NO_GOOD_INFORMATION_FOUND) {
                 console.info("Cache hit:" + name);
                 return cache[name];
             }
+        }
+
+        var no_good_information = _.all(names, function (name) {
+            return cache[name] === self.NO_GOOD_INFORMATION_FOUND;
+        });
+
+        if (no_good_information) {
+            return self.NO_GOOD_INFORMATION_FOUND;
+        } else {
+            return undefined;
         }
     }
 
@@ -26,6 +39,8 @@ function Wikipedia() {
         var cached = this._get_from_cache(self.article_cache, names)
         if (cached && cached !== self.NO_GOOD_INFORMATION_FOUND) {
             return onSuccess(cached);
+        } else if (cached === self.NO_GOOD_INFORMATION_FOUND) {
+            return onSuccess(undefined);
         }
 
         self._makeRequestUntilGoodContent(names, onSuccess, {
@@ -42,6 +57,8 @@ function Wikipedia() {
         var cached = this._get_from_cache(self.image_cache, names)
         if (cached && cached !== self.NO_GOOD_INFORMATION_FOUND) {
             return onSuccess(cached);
+        } else if (cached === self.NO_GOOD_INFORMATION_FOUND) {
+            return onSuccess(undefined);
         }
 
         self._makeRequestUntilGoodContent(names, onSuccess, {
