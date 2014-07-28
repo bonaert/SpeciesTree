@@ -10,6 +10,7 @@ class GoogleWebmasterVerifier(webapp2.RequestHandler):
 
 class SiteMapHandler(webapp2.RequestHandler):
     def get(self):
+        self.response.headers["Content-Type"] = "application/xml"
         self.response.write(file('sitemap.xml').read())
 
 application = webapp2.WSGIApplication([
