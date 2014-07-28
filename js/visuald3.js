@@ -59,8 +59,8 @@ function getInformationPaneDatum() {
 }
 
 function showInformation(data, tree, scrollToInformationPanel) {
-   setUpInformationPanel();
-   showWikipediaInformation(data, tree, scrollToInformationPanel);
+    setUpInformationPanel();
+    showWikipediaInformation(data, tree, scrollToInformationPanel);
 }
 
 function showWikipediaInformation(data, tree, scrollToInformationPanel) {
@@ -94,15 +94,15 @@ function addWikipediaImage(wiki, commonName, speciesName, divSelection) {
     wiki.image(commonName, speciesName, function (imagesData) {
         var url = chooseImage(imagesData || []);
         if (url) {
-            addWikipediaImageToSelection(divSelection, url);
+            addWikipediaImageToSelection(divSelection, commonName, speciesName, url);
         }
     });
 }
 
-function addWikipediaImageToSelection(divSelection, url) {
+function addWikipediaImageToSelection(divSelection, commonName, speciesName, url) {
     divSelection.insert('img', '#content')
-        .attr('src', url)
-        .attr('alt', 'image')
+        .attr('src', url + 'asdasdasdasd')
+        .attr('alt', commonName + ' - ' + speciesName + ' (' + tree.getTaxon() + ')')
         .attr('class', 'ui huge image');
 }
 
