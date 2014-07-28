@@ -17,7 +17,23 @@ function Tree() {
     this.childrenIDs = [];
     this.isVirusChildren = false;
 
-    this.baseUrl = "http://api.gbif.org/v0.9/species/";
+    this.baseUrl = "http://api.gbif.org/v1/species/";
+
+    this.NO_GOOD_INFORMATION_FOUND = "There was no information found. This is a random string. HAHA HOHO HIHI";
+
+    this.cache = {};
+
+    this._get_from_cache = function (id) {
+        if (self.cache[id] && self.cache[id].length !== 0) {
+            console.info("Cache hit! ID:" + id.toString());
+            console.info(self.cache[id]);
+        }
+        return self.cache[id];
+    }
+
+    this._set_in_cache = function (id, results) {
+        return self.cache[id] = results;
+    }
 
     this.getTaxon = function () {
         return this.levels[this.level];
@@ -97,11 +113,11 @@ function Tree() {
         });
     };
 
-    this.fetchBasicChildrenInformation = function (onSucess) {
+    this.fetchBasicChildrenInformation = function (onSuccess) {
         this._fetchBasicChildrenInformation(function (children) {
             self._processBasicChildrenInformationCallback(children);
             var infoArray = self._buildBasicChildrenInformationArray();
-            onSucess(infoArray);
+            onSuccess(infoArray);
         });
     };
 
@@ -147,8 +163,10 @@ function Tree() {
 
             // Convert string ID to integer ID
             // Replace key as id in child object, for consistency
-            child.id = parseInt(child.key);
-            delete child.key;
+            if (child.key) {
+                child.id = parseInt(child.key);
+                delete child.key;
+            }
 
             self.childrenIDs.push(child.id);
             self.basicChildrenInformation[child.id] = child;
@@ -160,12 +178,18 @@ function Tree() {
     };
 
     this._fetchBasicChildrenInformation = function (callback) {
+        var cached = self._get_from_cache(self.rootID);
+
         if (this.rootID === 0) {
-            this._fetchRootNodesBasicInformation(callback);
+            self._fetchRootNodesBasicInformation(callback);
+        } else if (cached) {
+            callback(cached);
         } else {
             var completeUrl = self.make_children_url();
             this._fetchData(completeUrl, function (data) {
-                callback(data[0].results);
+                var result = data[0].results;
+                self._set_in_cache(self.rootID, result);
+                callback(result);
             });
         }
     };
