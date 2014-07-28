@@ -3,6 +3,7 @@ SpeciesTree
 
 A tree of life vizualization, still in early stages.
 
+See [demo](www.species-explorer.appspot.com).
 
 Latest Preview
 =================================================
