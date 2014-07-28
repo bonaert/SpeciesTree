@@ -5,3 +5,5 @@ semantic/
 .idea/
 *.min.css
 *.min.js
+*.pyc
+Thumbs.db
