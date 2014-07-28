@@ -48,18 +48,18 @@ function getCommonName(data) {
 
 // Data stuff
 
-function setSidebarDatum(value) {
+function setInformationPaneDatum(value) {
     // Binds data to the sidebar. The data is [id, has_wikipedia_content]. This allows us
     // to not reload data when we go into sublevel if sidebar has already the correct data
     d3.select('#infoContainer').datum(value);
-};
+}
 
 function getSidebarDatum() {
     return d3.select('#infoContainer').datum() || [-1, false];
 }
 
 function showInformation(data, tree) {
-    setUpSidebar();
+    setUpInformationPanel();
     showWikipediaInformation(data, tree);
 }
 
@@ -78,11 +78,11 @@ function showWikipediaInformation(data, tree) {
         var divSelection = d3.select('#speciesData');
 
         if (data) {
-            setSidebarDatum([ID, true]);
+            setInformationPaneDatum([ID, true]);
             addWikipediaTextToSelection(data, tree, divSelection);
             addWikipediaImage(wiki, commonName, speciesName, divSelection);
         } else {
-            setSidebarDatum([ID, false]);
+            setInformationPaneDatum([ID, false]);
             addNoAvailableInformationText(divSelection);
         }
     });
@@ -175,7 +175,7 @@ function expandSuperTree(svgContainer, tree) {
         return;
     }
 
-    removeSidebarContent();
+    removeInformationPanelContent();
     hideSidebar();
     scrollToTop();
 
@@ -224,19 +224,10 @@ function scrollToTop() {
     }, 'fast');
 }
 
+// Infomation panel
+
+
 // Sidebar
-function getSidebar() {
-    return d3.select('#infoContainer');
-}
-
-function sidebarIsSmall() {
-    return getSidebar().attr('class').indexOf('very wide') === -1;
-}
-
-function removeSidebarContent() {
-    d3.selectAll('#speciesData').remove();
-    d3.selectAll('#removeIcon').remove();
-}
 
 // The info panel can be a sidebar if the window width is large enough
 // If it is, we use some animations.
@@ -248,31 +239,42 @@ function hideSidebar() {
     $('.sidebar').sidebar('hide');
 }
 
-function collapseSidebar() {
-    setSidebarDatum([0, false]);
-    removeSidebarContent();
+// General
+
+function getInformationPanel() {
+    return d3.select('#infoContainer');
+}
+
+function removeInformationPanelContent() {
+    d3.selectAll('#speciesData').remove();
+    d3.selectAll('#removeIcon').remove();
+}
+
+function collapseInformationPanel() {
+    setInformationPaneDatum([0, false]);
+    removeInformationPanelContent();
     hideSidebar();
 }
 
-function addRemoveIconToSidebar() {
-    getSidebar()
+function addRemoveIconToInformationPanel() {
+    getInformationPanel()
         .append('div')
         .attr('class', 'ui black icon button')
         .attr('id', 'removeIcon')
         .style('margin-top', '20px')
-        .on('click', collapseSidebar)
+        .on('click', collapseInformationPanel)
         .append('i')
         .attr('class', 'remove icon');
 }
 
 function addSpeciesDataContainer() {
-    getSidebar().append('div').attr('id', 'speciesData');
+    getInformationPanel().append('div').attr('id', 'speciesData');
 }
 
 
-function setUpSidebar() {
-    removeSidebarContent();
-    addRemoveIconToSidebar();
+function setUpInformationPanel() {
+    removeInformationPanelContent();
+    addRemoveIconToInformationPanel();
     addSpeciesDataContainer();
     showSidebar();
 }
@@ -284,13 +286,12 @@ function putWikipediaInfoLoader() {
         .append('div')
         .attr('id', 'infoLoader')
         .style('width', '50%')
-        .style('margin', '0 auto')
+        .style('margin', '0 auto');
 
-    div.append('div').attr('class', 'ui large active inline loader')
+    div.append('div').attr('class', 'ui large active inline loader');
     div.append('b').style('margin-left', '20px').text('Fetching information...');
 
-};
-
+}
 
 function removeWikipediaInfoLoader() {
     d3.select('#speciesData').select('#infoLoader').remove();
