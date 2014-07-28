@@ -4,7 +4,7 @@ var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 
 var unwantedImages = ['map'];
 var filterList = _.union(wikipediaImages, portalImages, unwantedImages);
 
-var width = 1000;
+var width = Math.min(1000, $(window).width());
 var height = 500;
 
 var rootCircleRadius = 30;
