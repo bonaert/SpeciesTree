@@ -8,15 +8,15 @@ var width = 1000;
 var height = 500;
 
 var rootCircleRadius = 30;
-var rootCircleCenterXPos = 30;
+var rootCircleCenterXPos = 5;
 
 var verticalBarLength = 100;
 var verticalMargin = 30;
 
-var horizontalOffset = 150;
+var horizontalOffset = 20;
 var verticalBarXPos = rootCircleCenterXPos + rootCircleRadius + horizontalOffset;
 
-var barWidth = 100;
+var barWidth = 20;
 
 // Distance between two children
 var heightBetweenChildren = 100;
@@ -113,7 +113,10 @@ function addWikipediaTextToSelection(data, tree, divSelection) {
 
     var titleText = title + " (" + tree.getTaxon() + ')';
     divSelection.append('h1').attr('class', 'header').text(titleText);
-    divSelection.append('div').attr('id', 'content').html(content);
+    divSelection.append('div')
+        .attr('id', 'content')
+        .style('padding-left', '10px')
+        .html(content);
 }
 
 function addNoAvailableInformationText(divSelection) {
@@ -477,23 +480,29 @@ function addChildrenTextButton(svgContainer, childrenData, tree) {
         })
         .attr('class', 'textButton');
 
-    addTextToButtons(buttons, svgContainer, tree);
-    addIconToButtons(buttons, tree);
+
+    var size;
+    if (width > 1000) {
+        size = "";
+    } else {
+        size = "small"
+    }
+    addTextToButtons(buttons, size, svgContainer, tree);
+    addIconToButtons(buttons, size, tree);
 }
 
-function addTextToButtons(buttons, svgContainer, tree) {
+function addTextToButtons(buttons, size, svgContainer, tree) {
     var isAtSpeciesLevel = tree.isAtSpeciesLevel();
 
     var button = buttons.append('div');
     if (isAtSpeciesLevel) {
-        button.attr('class', 'ui active blue button');
+        button.attr('class', 'ui active blue ' + size + ' button');
     } else {
-        button.attr('class', 'ui blue labeled icon button');
+        button.attr('class', 'ui blue labeled icon ' + size + ' button');
         button.on('click', function (data) {
             showChildren(data, svgContainer, tree);
         });
     }
-
 
 
     button.text(function (data) {
@@ -510,10 +519,10 @@ function addTextToButtons(buttons, svgContainer, tree) {
     }
 }
 
-function addIconToButtons(buttons, tree) {
+function addIconToButtons(buttons, size, tree) {
 
     buttons.append('div')
-        .attr('class', 'ui green icon button')
+        .attr('class', 'ui green icon ' + size + ' button')
         .on("click", function (data) {
             showInformation(data, tree, true);
         })
@@ -568,11 +577,12 @@ var svgSelection = selection.append("svg")
 var body = d3.select('body');
 var windowWidth = $(window).width();
 if (windowWidth > 1000) {
+    body.style('padding', '2em 2em 4em')
     body.insert('div', '#speciesContainer')
         .attr('id', 'infoContainer')
         .attr('class', 'ui right very wide sidebar verticalLine');
 } else {
-    body.insert('div', '.ui.info.message')
+    body.insert('div', '.ui.segment')
         .attr('id', 'infoContainer');
 }
 
