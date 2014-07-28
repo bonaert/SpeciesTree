@@ -1,20 +1,55 @@
 /*jslint browser: true, devel: true, nomen: true */
+
+
 function Wikipedia() {
     var self = this;
     this.url_article = 'http://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exlimit=10&redirects&titles=';
     this.url_image = "http://en.wikipedia.org/w/api.php?action=query&redirects&generator=images&gimlimit=20&prop=imageinfo&iiprop=url|dimensions|mime&format=json&titles=";
+    this.NO_GOOD_INFORMATION_FOUND = "There was no information found. This is a random string. HAHA HOHO HIHI";
 
+    this.article_cache = {};
+    this.image_cache = {};
+
+    this._get_from_cache = function (cache, names) {
+        for (var i = 0; i < names.length; i++) {
+            var name = names[i];
+            if (cache[name]) {
+                console.info("Cache hit:" + name);
+                return cache[name];
+            }
+        }
+    }
 
     this.article = function (commonName, speciesName, onSuccess) {
         var names = this._get_good_names([commonName, speciesName]);
-        var urls = self._build_urls(names, self._makeArticleUrl);
-        self._makeRequestUntilGoodContent(urls, self.processArticle, self._ArticleHasGoodContent, onSuccess);
+
+        var cached = this._get_from_cache(self.article_cache, names)
+        if (cached && cached !== self.NO_GOOD_INFORMATION_FOUND) {
+            return onSuccess(cached);
+        }
+
+        self._makeRequestUntilGoodContent(names, onSuccess, {
+            cache: self.article_cache,
+            process_data: self.processArticle,
+            has_good_content: self._ArticleHasGoodContent,
+            make_url: self._makeArticleUrl
+        });
     };
 
     this.image = function (commonName, speciesName, onSuccess) {
         var names = this._get_good_names([commonName, speciesName]);
-        var urls = self._build_urls(names, self._makeImageUrl);
-        self._makeRequestUntilGoodContent(urls, self.process_image, self._imageHasGoodContent, onSuccess);
+
+        var cached = this._get_from_cache(self.image_cache, names)
+        if (cached && cached !== self.NO_GOOD_INFORMATION_FOUND) {
+            return onSuccess(cached);
+        }
+
+        self._makeRequestUntilGoodContent(names, onSuccess, {
+            cache: self.image_cache,
+            process_data: self.processImage,
+            has_good_content: self._imageHasGoodContent,
+            make_url: self._makeImageUrl
+        });
     };
 
     // Process data
@@ -30,7 +65,7 @@ function Wikipedia() {
         return pages[content_keys[0]];
     };
 
-    this.process_image = function (data) {
+    this.processImage = function (data) {
         if (_.isUndefined(data.query) || _.isUndefined(data.query.pages)) {
             return undefined;
         }
@@ -97,19 +132,31 @@ function Wikipedia() {
 
 
     // General function
-    this._makeRequestUntilGoodContent = function (urls, process_data, has_good_content, onSuccess) {
-        if (urls.length === 0) {
+    this._makeRequestUntilGoodContent = function (names, onSuccess, options) {
+        if (names.length === 0) {
             onSuccess(undefined);
             return;
         }
 
-        var url = urls[0];
+        var cache = options.cache,
+            process_data = options.process_data,
+            has_good_content = options.has_good_content,
+            make_url = options.make_url;
+
+        var name = names[0];
+        var url = make_url(name);
+
         this._makeRequest(url, function (data) {
             var result = process_data(data);
+
             if (has_good_content(result)) {
+                cache[name] = result;
+
                 onSuccess(result);
             } else {
-                self._makeRequestUntilGoodContent(_.tail(urls), process_data, has_good_content, onSuccess);
+                cache[name] = self.NO_GOOD_INFORMATION_FOUND;
+
+                self._makeRequestUntilGoodContent(_.tail(names), onSuccess, options);
             }
         });
     };
