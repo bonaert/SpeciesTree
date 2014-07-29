@@ -80,6 +80,34 @@ b {
 .ui.active.right.very.wide.sidebar {
     margin-left: calc(800px - 100%) !important;
 }
+@media (min-width: 1000px) and (max-width: 1400px) {
+    .ui.very.wide.sidebar {
+        width: calc(60%) !important;
+        margin-left: calc(10px - 60% - 10px) !important;
+        padding-left: 10px;
+        background: #fff;
+    }
+    .ui.active.very.wide.sidebar {
+        margin-left: 0px !important;
+    }
+    .ui.active.right.very.wide.sidebar {
+        margin-left: calc(10px - 60% - 10px) !important;
+    }
+}
+@media (min-width: 1400px) {
+    .ui.very.wide.sidebar {
+        width: calc(100% - 800px) !important;
+        margin-left: calc(800px - 100%) !important;
+        padding-left: 10px;
+        background: #fff;
+    }
+    .ui.active.very.wide.sidebar {
+        margin-left: 0px !important;
+    }
+    .ui.active.right.very.wide.sidebar {
+        margin-left: calc(800px - 100%) !important;
+    }
+}
 #speciesContainer {
     position: relative;
 }
@@ -90,9 +118,24 @@ b {
     display: table;
     margin: 0 auto;
 }
-.infoText {
-    width: 50em;
-    margin-top: 20px;
-    text-align: center;
-    text-indent: 5em;
+@media (max-width: 1000px) {
+    .infoText {
+        width: 90%;
+        margin-top: 20px;
+        padding-left: 10px;
+    }
+    .item > .icon {
+        width: 20px !important;
+    }
+    .item {
+        font-size: 14px !important;
+    }
+}
+@media (min-width: 1000px) {
+    .infoText {
+        width: 50em;
+        margin-top: 20px;
+        text-align: center;
+        text-indent: 5em;
+    }
 }
