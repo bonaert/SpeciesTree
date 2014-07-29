@@ -510,7 +510,7 @@ function addTextToButtons(buttons, size, svgContainer, tree) {
         return capitalise(text);
     }).style('width', function (data) {
         var text = getName(data);
-        var width = Math.max(200, text.length * 12 + 90);
+        var width = Math.max(200, text.length * 9 + 100);
         return width.toString() + 'px';
     });
 
@@ -574,15 +574,19 @@ var svgSelection = selection.append("svg")
     .attr('width', width)
     .attr('height', height);
 
-var body = d3.select('body');
+var contentDiv = d3.select('#contentDiv');
 var windowWidth = $(window).width();
 if (windowWidth > 1000) {
-    body.style('padding', '2em 2em 4em')
-    body.insert('div', '#speciesContainer')
+    contentDiv.style('padding', '2em 2em 8em !important')
+        .style('margin-left', '20px');
+    contentDiv.insert('div', '#speciesContainer')
         .attr('id', 'infoContainer')
-        .attr('class', 'ui right very wide sidebar verticalLine');
+        .attr('class', 'ui right very wide sidebar verticalLine')
+        .attr('style', 'margin-top: 58px !important;');
+
+    d3.select('#headerMenu').attr('style', 'width: ' + windowWidth.toString() + 'px !important;');
 } else {
-    body.insert('div', '.ui.segment')
+    contentDiv.insert('div', '.ui.segment')
         .attr('id', 'infoContainer');
 }
 
