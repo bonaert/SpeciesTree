@@ -86,7 +86,13 @@ b {
 .bigLetters {
     font-size: 20px !important;
 }
+.centered {
+    display: table;
+    margin: 0 auto;
+}
 .infoText {
+    width: 50em;
     margin-top: 20px;
+    text-align: center;
     text-indent: 5em;
 }
