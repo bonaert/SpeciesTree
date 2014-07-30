@@ -17,27 +17,16 @@ def get_from_cache(filename):
         memcache.add(filename, value)
         return value
 
-class MainPage(webapp2.RequestHandler):
-    def get(self):
-        self.response.write(get_file('index.html'))
+class MainHandler(webapp2.RequestHandler):
+    def get(self, filename):
+        if filename in filenames:
+            if filename == 'sitemap.xml':
+                self.response.headers["Content-Type"] = "application/xml"
 
-class GoogleWebmasterVerifier(webapp2.RequestHandler):
-    def get(self):
-        self.response.write(get_file('google7e0693b4ccda33f7.html'))
-
-class SiteMapHandler(webapp2.RequestHandler):
-    def get(self):
-        self.response.headers["Content-Type"] = "application/xml"
-        self.response.write(get_file('sitemap.xml'))
-
-class AboutHandler(webapp2.RequestHandler):
-    def get(self):
-        self.response.write(get_file('about.html'))
+            self.response.write(get_file(filename))
+        else:
+            self.response.write(get_file('index.html'))
 
 application = webapp2.WSGIApplication([
-    ('/google7e0693b4ccda33f7.html', GoogleWebmasterVerifier),
-    ('/sitemap.xml', SiteMapHandler),
-    ('/about.html', AboutHandler),
-    ('/index.html', MainPage),
-    ('/.*', MainPage)
+    ('/(.*)', MainHandler),
 ], debug=True)
