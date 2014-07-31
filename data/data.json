@@ -16,6 +16,7 @@
         "nomenclaturalStatus": [],
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 1913824,
+        "vernacularName": "Animals",
         "synonym": false
     }, {
         "key": 2,
@@ -34,6 +35,7 @@
         "nomenclaturalStatus": [],
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 462,
+        "vernacularName": "Archaea",
         "synonym": false
     }, {
         "key": 3,
@@ -52,6 +54,7 @@
         "nomenclaturalStatus": [],
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 14257,
+        "vernacularName": "Bacteria",
         "synonym": false
     }, {
         "key": 4,
@@ -72,6 +75,7 @@
         "nomenclaturalStatus": [],
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 18185,
+        "vernacularName": "Chromista",
         "synonym": false
     }, {
         "key": 5,
@@ -93,6 +97,7 @@
         "publishedIn": "Bot. Mar. 23: 371 (1980)",
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 319365,
+        "vernacularName": "Fungi",
         "synonym": false
     }, {
         "key": 6,
@@ -111,6 +116,7 @@
         "nomenclaturalStatus": [],
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 953711,
+        "vernacularName": "Plants",
         "synonym": false
     }, {
         "key": 7,
@@ -129,6 +135,7 @@
         "nomenclaturalStatus": [],
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 41538,
+        "vernacularName": "Protozoa",
         "synonym": false
     }, {
         "key": 8,
@@ -147,6 +154,7 @@
         "nomenclaturalStatus": [],
         "accordingTo": "The Catalogue of Life, 3rd January 2011",
         "numDescendants": 5723,
+        "vernacularName": "Viruses",
         "synonym": false
     }
 ]
