@@ -569,27 +569,116 @@ function addChildren(svgContainer, tree, children) {
     addChildrenToSvg(svgContainer, tree, children);
 }
 
-var selection = d3.select("#speciesContainer");
-var svgSelection = selection.append("svg")
-    .attr('width', width)
-    .attr('height', height);
+function setUp() {
+    var selection = d3.select("#speciesContainer");
+    var contentDiv = d3.select('#contentDiv');
 
-var contentDiv = d3.select('#contentDiv');
-var windowWidth = $(window).width();
-if (windowWidth > 1000) {
+    var svgSelection = setUpSvg(selection);
+
+    var windowWidth = $(window).width();
+    if (windowWidth > 1000) {
+        adjustPadding(contentDiv);
+        addSidebar(contentDiv, windowWidth);
+    } else {
+        addSegment(contentDiv);
+    }
+
+    setUpSearchBox();
+    return svgSelection;
+}
+
+function setUpSvg(selection) {
+    return selection.append("svg")
+        .attr('width', width)
+        .attr('height', height);
+}
+
+function adjustPadding(contentDiv) {
     contentDiv.style('padding', '2em 2em 8em !important')
         .style('margin-left', '20px');
+}
+
+function addSidebar(contentDiv, windowWidth) {
     contentDiv.insert('div', '#speciesContainer')
         .attr('id', 'infoContainer')
         .attr('class', 'ui right very wide sidebar verticalLine')
         .attr('style', 'margin-top: 58px !important;');
+    adjustHeaderWidth(windowWidth);
+}
 
-    d3.select('#headerMenu').attr('style', 'width: ' + windowWidth.toString() + 'px !important;');
-} else {
+function adjustHeaderWidth(windowWidth) {
+    d3.select('#headerMenu')
+        .attr('style', 'width: ' + windowWidth.toString() + 'px !important;');
+}
+
+function addSegment(contentDiv) {
     contentDiv.insert('div', '.ui.segment')
         .attr('id', 'infoContainer');
 }
 
+function setUpSearchBox() {
+    d3.select('#searchIcon').on('click', function () {
+        var searchText = $('searchInput').val();
+        if (searchText) {
+            search(searchText);
+        }
+    });
+
+    $('#searchInput').keypress(function (event) {
+        var keyCode = event.which || event.keyCode;
+        if (keyCode !== 13) {
+            return;
+        }
+        var searchText = $('#searchInput').val();
+        if (searchText) {
+            search(searchText);
+        }
+    })
+}
+
+function search(text) {
+    var url = encodeURI('getData?name=' + text);
+    $.getJSON(url, function(data){
+        if (data.length > 0){
+            processSearch(data[0]);
+        } else {
+            tree.search(text, processSearch);
+        }
+    });
+}
+
+function processSearch(results) {
+    clearPreviousResults();
+    if (results) {
+        addNewResults(results);
+    } else {
+        addNoResultFoundText();
+    }
+}
+
+function clearPreviousResults() {
+    d3.select('#resultsList').remove();
+}
+
+function addNewResults(result) {
+    var name = result.vernacularName || result.canonicalName;
+    d3.select('#searchResults')
+        .append('ul')
+        .attr('id', 'resultsList')
+        .append('li')
+        .text(name + ' (' + result.rank + ')');
+}
+
+function addNoResultFoundText() {
+    d3.select('#searchResults')
+        .append('ul')
+        .attr('id', 'resultsList')
+        .append('li')
+        .text('No results');
+}
+
+
+var svgSelection = setUp();
 var tree = new Tree();
 var wiki = new Wikipedia();
 addRoot(svgSelection, tree);
