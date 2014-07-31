@@ -9,6 +9,8 @@ function Tree() {
         'id': 0,
         'scientificName': 'Life'
     };
+
+    this.gbif = new GBIF();
     this.parentIDs = [];
     this.parentInfo = [];
 
@@ -16,24 +18,6 @@ function Tree() {
     this.childrenDescription = {};
     this.childrenIDs = [];
     this.isVirusChildren = false;
-
-    this.baseUrl = "http://api.gbif.org/v1/species/";
-
-    this.NO_GOOD_INFORMATION_FOUND = "There was no information found. This is a random string. HAHA HOHO HIHI";
-
-    this.cache = {};
-
-    this._get_from_cache = function (id) {
-        if (self.cache[id] && self.cache[id].length !== 0) {
-            console.info("Cache hit! ID:" + id.toString());
-            console.info(self.cache[id]);
-        }
-        return self.cache[id];
-    }
-
-    this._set_in_cache = function (id, results) {
-        return self.cache[id] = results;
-    }
 
     this.getTaxon = function () {
         return this.levels[this.level];
@@ -51,7 +35,7 @@ function Tree() {
         if (!this.isAtKingdomLevel()) {
             return _.last(self.parentInfo);
         }
-    }
+    };
 
     this.getBasicInformation = function (id) {
         if (id === 0) {
@@ -64,7 +48,7 @@ function Tree() {
         } else {
             return self.basicChildrenInformation[id];
         }
-    }
+    };
 
     this.setRootToChild = function (childID) {
         this.parentIDs.push(this.rootID);
@@ -107,17 +91,11 @@ function Tree() {
         }
     };
 
-    this._buildBasicChildrenInformationArray = function () {
-        return _.map(self.childrenIDs, function (id) {
-            return self.basicChildrenInformation[id];
-        });
-    };
-
     this.fetchBasicChildrenInformation = function (onSuccess) {
-        this._fetchBasicChildrenInformation(function (children) {
-            self._processBasicChildrenInformationCallback(children);
-            var infoArray = self._buildBasicChildrenInformationArray();
-            onSuccess(infoArray);
+        self.gbif.fetchBasicChildrenInformation(this.rootID, function (results) {
+            var selectedResults = self.selectResults(results);
+            self.addResultsToDatabase(selectedResults);
+            onSuccess(selectedResults);
         });
     };
 
@@ -141,107 +119,33 @@ function Tree() {
         });
     };
 
+    this.selectResults = function (children) {
+        // It is not self.levels[self.level + 1], because self.level starts at 1, instead of 0
+        var currentChildLevel = self.levels[self.level];
 
-    this._processBasicChildrenInformationCallback = function (children) {
+        // For other kingdom, the children will (strangely) include children not immediately
+        // lower-level (instead of kingdom->phylum, some are kingdom->genus). We filter those.
+        // Viruses are subject to a different type of classification, where the children of a kingdom
+        // have as level order (instead of phylum).Therefore, this restriction cannot take place.
+        return _.filter(children, function (child) {
+            return child.rank.toLowerCase() === currentChildLevel || self.isVirusChildren;
+        });
+    };
+
+    this.addResultsToDatabase = function (children) {
         self.basicChildrenInformation = {};
         self.childrenDescription = {};
         self.childrenIDs = [];
 
-
-        // It is not self.levels[self.level + 1], because self.level starts at 1, instead of 0
-        var currentChildLevel = self.levels[self.level];
-
-        for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-
-            // Viruses are subject to a different type of classification, where the children are order-level (instead of phylum).
-            // Therefore, this restriction cannot take place. For other kingdom, the children will (strangely) include
-            // childs not immedially lower-level (instead of kingdom->phylum, some are kingdom->genus).
-            if (!this.isVirusChildren && child.rank.toLowerCase() !== currentChildLevel) {
-                continue;
-            }
-
-            // Convert string ID to integer ID
-            // Replace key as id in child object, for consistency
-            if (child.key) {
-                child.id = parseInt(child.key);
-                delete child.key;
-            }
-
+        _.forEach(children, function (child) {
             self.childrenIDs.push(child.id);
             self.basicChildrenInformation[child.id] = child;
-        }
-    };
-
-    this.make_children_url = function () {
-        return self.baseUrl + this.rootID.toString() + '/children?limit=100';
-    };
-
-    this._fetchBasicChildrenInformation = function (callback) {
-        var cached = self._get_from_cache(self.rootID);
-
-        if (this.rootID === 0) {
-            self._fetchRootNodesBasicInformation(callback);
-        } else if (cached) {
-            callback(cached);
-        } else {
-            var completeUrl = self.make_children_url();
-            this._fetchData(completeUrl, function (data) {
-                var result = data[0].results;
-                self._set_in_cache(self.rootID, result);
-                callback(result);
-            });
-        }
-    };
-
-    this._fetchRootNodesBasicInformation = function (callback) {
-        $.getJSON('data/data.json', callback);
-    };
-
-    this._fetchChildrenData = function (onSuccess) {
-        var urls = this._buildUrls(this.childrenIDs);
-        this._fetchMultipleData(urls, function (results) {
-            var parsedResults = [];
-            _.each(results, function (result) {
-                var child = result[0];
-
-                // Convert string ID to integer ID
-                child.key = parseInt(child.key);
-                self.childrenDescription[child.key] = child;
-
-                parsedResults.push(child);
-            });
-            onSuccess(parsedResults);
         });
     };
 
-
-    this._buildUrls = function (IDs) {
-        return _.map(IDs, this._buildUrl);
-    };
-
-    this._buildUrl = function (ID) {
-        return encodeURI(self.baseUrl + ID);
-    };
-
-    this._fetchData = function (url, onSucess) {
-        this._fetchMultipleData([url], onSucess);
-    };
-
-    this._fetchMultipleData = function (urls, onSuccess) {
-        var requests = this._makeAllRequests(urls);
-        var errorFunction = function () {};
-        $.when.all(requests).done(onSuccess, errorFunction);
-    };
-
-    this._makeAllRequests = function (urls) {
-        return _.map(urls, this._createRequest);
-    };
-
-    this._createRequest = function (url) {
-        return $.ajax({
-            type: 'GET',
-            url: url
+    this.search = function (name, callback) {
+        self.gbif.search(name, function (results) {
+            callback(results);
         });
     };
 }
