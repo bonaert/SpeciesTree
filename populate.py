@@ -107,6 +107,8 @@ class Populator():
         if rank_id >= 3 and not options['is_animal_or_plant_subgroup']:
             return results
 
+        # Tries to use different limits, because changing it sometimes
+        # returns the vernacular name if missing in the previouus queries
         if self.has_vernacular_name(results):
             logging.info('Children of node with ID %d have vernacular name with no limit' % ID)
             return results
