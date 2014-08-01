@@ -48,11 +48,11 @@ function GBIF() {
     };
 
 
-    this._exchangeKeyWithID = function (children) {
-        _.each(children, function(child) {
-            self.exchangeKeyWithId(child);
+    this._exchangeKeyWithID = function (results) {
+        _.each(results, function(result) {
+            self.exchangeKeyWithId(result);
         });
-        return children;
+        return results;
     };
 
     this.make_children_url = function (id) {
@@ -194,6 +194,14 @@ function GBIF() {
 
             var resultName = result.canonicalName || result.scientificName;
             return resultName && resultName.toLowerCase() === lowerCaseName;
+        })
+    };
+
+    this.getParents = function (id, callback) {
+        var url = encodeURI(self.baseUrl + id.toString() + '/parents');
+        $.getJSON(url, function(data){
+            var fixedResults = self._exchangeKeyWithID(data);
+            callback(fixedResults);
         })
     };
 }
