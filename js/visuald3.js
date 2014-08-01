@@ -1,6 +1,6 @@
 /*jslint browser: true, devel: true, nomen: true, sloppy: true */
-var wikipediaImages = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink'];
-var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 'Leaf_1_web', 'Martinique.web'];
+var wikipediaImages = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink','padlock'];
+var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 'Leaf_1_web', 'Martinique.web', 'Tiger_in_the_water'];
 var unwantedImages = ['map'];
 var filterList = _.union(wikipediaImages, portalImages, unwantedImages);
 
@@ -63,26 +63,26 @@ function showInformation(data, tree, scrollToInformationPanel) {
     showWikipediaInformation(data, tree, scrollToInformationPanel);
 }
 
-function showWikipediaInformation(data, tree, scrollToInformationPanel) {
+function showWikipediaInformation(nodeData, tree, scrollToInformationPanel) {
     putWikipediaInfoLoader();
 
-    var speciesName = getScientificName(data);
-    var commonName = getCommonName(data);
-    var ID = data.id;
+    var speciesName = getScientificName(nodeData);
+    var commonName = getCommonName(nodeData);
+    var ID = nodeData.id;
 
-    wiki.article(commonName, speciesName, function (data) {
+    wiki.article(commonName, speciesName, function (wikiData) {
         removeWikipediaInfoLoader();
 
         var divSelection = d3.select('#speciesData');
 
-        if (data) {
+        if (wikiData) {
             setInformationPaneDatum([ID, true]);
-            addWikipediaTextToSelection(data, tree, divSelection);
+            addWikipediaTextToSelection(nodeData, wikiData, tree, divSelection);
             if (!sidebarExists() && scrollToInformationPanel) {
                 scrollToInformationPane();
             }
 
-            addWikipediaImage(wiki, commonName, speciesName, divSelection);
+            addWikipediaImage(wiki, wikiData.rank, commonName, speciesName, divSelection);
         } else {
             setInformationPaneDatum([ID, false]);
             addNoAvailableInformationText(divSelection);
@@ -90,28 +90,29 @@ function showWikipediaInformation(data, tree, scrollToInformationPanel) {
     });
 }
 
-function addWikipediaImage(wiki, commonName, speciesName, divSelection) {
+function addWikipediaImage(wiki, rank, commonName, speciesName, divSelection) {
     wiki.image(commonName, speciesName, function (imagesData) {
         var url = chooseImage(imagesData || []);
         if (url) {
-            addWikipediaImageToSelection(divSelection, commonName, speciesName, url);
+            addWikipediaImageToSelection(divSelection, rank, commonName, speciesName, url);
         }
     });
 }
 
-function addWikipediaImageToSelection(divSelection, commonName, speciesName, url) {
+function addWikipediaImageToSelection(divSelection, rank, commonName, speciesName, url) {
     divSelection.insert('img', '#content')
         .attr('src', url)
-        .attr('alt', commonName + ' - ' + speciesName + ' (' + tree.getTaxon() + ')')
+        .attr('alt', commonName + ' - ' + speciesName + ' (' + rank + ')')
         .attr('class', 'ui huge image');
 }
 
-function addWikipediaTextToSelection(data, tree, divSelection) {
-    var title = data.title;
-    var raw_content = data.extract;
+function addWikipediaTextToSelection(nodeData, wikiData, tree, divSelection) {
+    var title = wikiData.title;
+    var raw_content = wikiData.extract;
     var content = removeWikiCruft(raw_content);
 
-    var titleText = title + " (" + tree.getTaxon() + ')';
+    console.log(nodeData);
+    var titleText = title + " (" + nodeData.rank + ')';
     divSelection.append('h1').attr('class', 'header').text(titleText);
     divSelection.append('div')
         .attr('id', 'content')
@@ -143,7 +144,6 @@ function removeWikiCruft(text) {
 
     return text;
 }
-
 
 
 function chooseImage(imagesData) {
@@ -207,7 +207,11 @@ function showChildren(data, svgContainer, tree) {
         hideSidebar();
     }
 
-    tree.setRootToChild(ID);
+    if (tree.isChild(ID)) {
+        tree.setRootToChild(ID);
+    } else {
+        tree.setRoot(ID, data);
+    }
 
     addRoot(svgContainer, tree);
 
@@ -216,7 +220,6 @@ function showChildren(data, svgContainer, tree) {
         showInformation(data, tree, false);
     });
 }
-
 
 
 // UI Stuff
@@ -507,7 +510,7 @@ function addTextToButtons(buttons, size, svgContainer, tree) {
 
     button.text(function (data) {
         var text = getName(data);
-        return capitalise(text);
+        return toTitleCase(text);
     }).style('width', function (data) {
         var text = getName(data);
         var width = Math.max(200, text.length * 9 + 100);
@@ -638,21 +641,64 @@ function setUpSearchBox() {
 
 function search(text) {
     var url = encodeURI('getData?name=' + text);
-    $.getJSON(url, function(data){
-        if (data.length > 0){
-            processSearch(data[0]);
+    clearPreviousResults();
+    putSearchLoader();
+    $.getJSON(url, function (data) {
+        if (data.length > 0) {
+            processSearch(data);
         } else {
-            tree.search(text, processSearch);
+            processSearch(undefined);
         }
     });
 }
 
+function sortSearchResults(results) {
+    return results.sort(function (a, b) {
+        var aID = getRankID(a), bID = getRankID(b);
+        if (aID > bID) return 1;
+        else if (aID < bID) return -1;
+        else return 0
+    });
+}
 function processSearch(results) {
-    clearPreviousResults();
+    removeSearchLoader();
     if (results) {
-        addNewResults(results);
+        fixRanks(results);
+        var sortedResults = sortSearchResults(results);
+        addNewResults(sortedResults);
     } else {
         addNoResultFoundText();
+    }
+}
+
+function getRank(result) {
+    if (result.rank) {
+        return result.rank.toLowerCase()
+    } else {
+        var levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+        for (var i = levels.length - 1; i >= 0; i--) {
+            if (_.has(result, levels[i])) {
+                return levels[i];
+            }
+        }
+
+        return 'unknown'
+    }
+}
+
+function getRankID(result) {
+    var levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+    if (result.rank) {
+        return levels.indexOf(result.rank.toLowerCase()) + 1;
+    }
+    else {
+        for (var i = levels.length - 1; i >= 0; i--) {
+            if (_.has(result, levels[i])) {
+                return i + 1;
+            }
+        }
+
+        throw new Error('Cannot find id');
     }
 }
 
@@ -660,13 +706,28 @@ function clearPreviousResults() {
     d3.select('#resultsList').remove();
 }
 
-function addNewResults(result) {
-    var name = result.vernacularName || result.canonicalName;
+function fixRanks(results) {
+    _.each(results, function (result) {
+        result.rank = getRank(result);
+    });
+}
+function addNewResults(results) {
     d3.select('#searchResults')
         .append('ul')
         .attr('id', 'resultsList')
+        .selectAll('li')
+        .data(results)
+        .enter()
         .append('li')
-        .text(name + ' (' + result.rank + ')');
+        .append('a')
+        .on('click', function (result) {
+            clearPreviousResults();
+            showChildren(result, svgSelection, tree)
+        })
+        .text(function (result) {
+            var name = result.vernacularName || result.canonicalName;
+            return toTitleCase(name) + ' (' + result.rank + ')';
+        });
 }
 
 function addNoResultFoundText() {
@@ -677,6 +738,19 @@ function addNoResultFoundText() {
         .text('No results');
 }
 
+function putSearchLoader() {
+    var div = d3.select('#searchResults')
+        .append('div')
+        .attr('id', 'searchLoader')
+        .style('margin-top', '20px');
+
+    div.append('div').attr('class', 'ui large active inline loader');
+    div.append('b').style('margin-left', '20px').text('Fetching information...');
+}
+
+function removeSearchLoader() {
+    d3.select('#searchLoader').remove();
+}
 
 var svgSelection = setUp();
 var tree = new Tree();
