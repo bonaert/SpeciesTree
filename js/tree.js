@@ -10,6 +10,8 @@ function Tree() {
         'scientificName': 'Life'
     };
 
+    this.JUMPED_AROUND = -54;
+
     this.gbif = new GBIF();
     this.parentIDs = [];
     this.parentInfo = [];
@@ -19,7 +21,11 @@ function Tree() {
     this.childrenIDs = [];
     this.isVirusChildren = false;
 
-    this.getTaxon = function () {
+    this.getRootTaxon = function () {
+        return this.levels[this.level - 1];
+    };
+
+    this.getChildTaxon = function () {
         return this.levels[this.level];
     };
 
@@ -28,7 +34,7 @@ function Tree() {
     };
 
     this.isAtKingdomLevel = function () {
-        return (this.parentIDs.length === 0);
+        return (this.level === 1);
     };
 
     this.getParentInfo = function () {
@@ -94,6 +100,11 @@ function Tree() {
     this.fetchBasicChildrenInformation = function (onSuccess) {
         self.gbif.fetchBasicChildrenInformation(this.rootID, function (results) {
             var selectedResults = self.selectResults(results);
+            _.each(selectedResults, function(result){
+                if (result.rank){
+                    result.rank = result.rank.toLowerCase();
+                }
+            });
             self.addResultsToDatabase(selectedResults);
             onSuccess(selectedResults);
         });
@@ -148,4 +159,44 @@ function Tree() {
             callback(results);
         });
     };
+
+    this.setRoot = function (id, root) {
+        this.rootID = id;
+        this.root = root;
+        this.basicChildrenInformation = {};
+        this.childrenDescription = {};
+        this.childrenIDs = [];
+        this.level = self.get_level(root.rank);
+        this.updateParents();
+
+        // Add flag when where stepping into virus subtaxons
+        if (id === 8 || _.contains(self.parentIDs, 8)) {
+            this.isVirusChildren = true;
+        }
+    };
+
+    this.isChild = function (id) {
+        return _.contains(self.childrenIDs, id);
+    };
+
+    this.get_level = function (rank) {
+        return self.levels.indexOf(rank.toLowerCase()) + 1;
+    };
+
+    this.updateParents = function () {
+        self.parentIDs = [0];
+        self.parentInfo = [
+            {
+                'id': 0,
+                'scientificName': 'Life'
+            }
+        ];
+
+        self.gbif.getParents(self.rootID, function (parents) {
+            _.each(parents, function (parent) {
+                self.parentInfo.push(parent);
+                self.parentIDs.push(parent.id);
+            });
+        });
+    }
 }
