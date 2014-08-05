@@ -1,7 +1,7 @@
 /*jslint browser: true, devel: true, nomen: true, vars: true  */
 function Tree() {
     var self = this;
-    this.levels = ['life', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+    this.levels = ['life', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'subspecies'];
     this.level = 1;
 
     this.rootID = 0;
@@ -9,8 +9,6 @@ function Tree() {
         'id': 0,
         'scientificName': 'Life'
     };
-
-    this.JUMPED_AROUND = -54;
 
     this.gbif = new GBIF();
     this.parentIDs = [];
@@ -21,26 +19,12 @@ function Tree() {
     this.childrenIDs = [];
     this.isVirusChildren = false;
 
-    this.getRootTaxon = function () {
-        return this.levels[this.level - 1];
-    };
-
-    this.getChildTaxon = function () {
-        return this.levels[this.level];
-    };
-
-    this.isAtSpeciesLevel = function () {
+    this.isAtSubSpeciesLevel = function () {
         return this.level === this.levels.length - 1;
     };
 
     this.isAtKingdomLevel = function () {
         return (this.level === 1);
-    };
-
-    this.getParentInfo = function () {
-        if (!this.isAtKingdomLevel()) {
-            return _.last(self.parentInfo);
-        }
     };
 
     this.getBasicInformation = function (id) {
@@ -83,8 +67,7 @@ function Tree() {
             return;
         }
 
-        var parentID = this.parentIDs.pop();
-        this.rootID = parentID;
+        this.rootID = this.parentIDs.pop();
         this.root = this.parentInfo.pop();
         this.basicChildrenInformation = {};
         this.childrenDescription = {};
@@ -100,33 +83,13 @@ function Tree() {
     this.fetchBasicChildrenInformation = function (onSuccess) {
         self.gbif.fetchBasicChildrenInformation(this.rootID, function (results) {
             var selectedResults = self.selectResults(results);
-            _.each(selectedResults, function(result){
-                if (result.rank){
+            _.each(selectedResults, function (result) {
+                if (result.rank) {
                     result.rank = result.rank.toLowerCase();
                 }
             });
             self.addResultsToDatabase(selectedResults);
             onSuccess(selectedResults);
-        });
-    };
-
-    this.fetchChildDescription = function (childID, onSuccess) {
-        var url = this._buildUrl(childID) + '/descriptions';
-        this._fetchData(url, function (response) {
-            var result = [];
-
-            var data = response[0].results;
-            _.forEach(data, function (description) {
-                if (description.language === "ENGLISH") {
-                    result.push({
-                        "type": description.type,
-                        "description": description.description
-                    });
-                }
-            });
-
-            self.childrenDescription[childID] = result;
-            onSuccess(result);
         });
     };
 
