@@ -1,20 +1,13 @@
 /*jslint browser: true, devel: true, nomen: true, sloppy: true */
-var wikipediaImages = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink','padlock'];
-var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 'Leaf_1_web', 'Martinique.web', 'Tiger_in_the_water'];
-var unwantedImages = ['map'];
-var filterList = _.union(wikipediaImages, portalImages, unwantedImages);
-
-var width = Math.min(1000, $(window).width());
-var height = 500;
-
-var rootCircleRadius = 30;
+var buttonRadius = 30;
 var rootCircleCenterXPos = 5;
+var rootBottom = 80;
 
-var verticalBarLength = 100;
+var verticalBarOffset = 100;
 var verticalMargin = 30;
 
 var horizontalOffset = 20;
-var verticalBarXPos = rootCircleCenterXPos + rootCircleRadius + horizontalOffset;
+var verticalBarXPos = rootCircleCenterXPos + buttonRadius + horizontalOffset;
 
 var barWidth = 20;
 
@@ -46,716 +39,775 @@ function getCommonName(data) {
 }
 
 
-// Data stuff
-
-function setInformationPaneDatum(value) {
-    // Binds data to the information pane. The data is [id, has_wikipedia_content]. This allows us
-    // to avoid reloading data when we go into sublevel if information pane has already the correct data.
-    d3.select('#infoContainer').datum(value);
-}
-
-function getInformationPaneDatum() {
-    return d3.select('#infoContainer').datum() || [-1, false];
-}
-
-function showInformation(data, tree, scrollToInformationPanel) {
-    setUpInformationPanel();
-    showWikipediaInformation(data, tree, scrollToInformationPanel);
-}
-
-function showWikipediaInformation(nodeData, tree, scrollToInformationPanel) {
-    putWikipediaInfoLoader();
-
-    var speciesName = getScientificName(nodeData);
-    var commonName = getCommonName(nodeData);
-    var ID = nodeData.id;
-
-    wiki.article(commonName, speciesName, function (wikiData) {
-        removeWikipediaInfoLoader();
-
-        var divSelection = d3.select('#speciesData');
-
-        if (wikiData) {
-            setInformationPaneDatum([ID, true]);
-            addWikipediaTextToSelection(nodeData, wikiData, tree, divSelection);
-            if (!sidebarExists() && scrollToInformationPanel) {
-                scrollToInformationPane();
-            }
-
-            addWikipediaImage(wiki, wikiData.rank, commonName, speciesName, divSelection);
-        } else {
-            setInformationPaneDatum([ID, false]);
-            addNoAvailableInformationText(divSelection);
-        }
-    });
-}
-
-function addWikipediaImage(wiki, rank, commonName, speciesName, divSelection) {
-    wiki.image(commonName, speciesName, function (imagesData) {
-        var url = chooseImage(imagesData || []);
-        if (url) {
-            addWikipediaImageToSelection(divSelection, rank, commonName, speciesName, url);
-        }
-    });
-}
-
-function addWikipediaImageToSelection(divSelection, rank, commonName, speciesName, url) {
-    divSelection.insert('img', '#content')
-        .attr('src', url)
-        .attr('alt', commonName + ' - ' + speciesName + ' (' + rank + ')')
-        .attr('class', 'ui huge image');
-}
-
-function addWikipediaTextToSelection(nodeData, wikiData, tree, divSelection) {
-    var title = wikiData.title;
-    var raw_content = wikiData.extract;
-    var content = removeWikiCruft(raw_content);
-
-    console.log(nodeData);
-    var titleText = title + " (" + nodeData.rank + ')';
-    divSelection.append('h1').attr('class', 'header').text(titleText);
-    divSelection.append('div')
-        .attr('id', 'content')
-        .style('padding-left', '10px')
-        .html(content);
-}
-
-function addNoAvailableInformationText(divSelection) {
-    divSelection.append('h1').text('No available information');
-}
-
-function removeWikiCruft(text) {
-    var lowercaseText = text.toLowerCase();
-
-    var index = lowercaseText.indexOf('see also');
-    if (index !== -1) {
-        return text.substring(0, index);
-    }
-
-    var index = lowercaseText.indexOf('references');
-    if (index !== -1) {
-        return text.substring(0, index);
-    }
-
-    var index = lowercaseText.indexOf('bibliography');
-    if (index !== -1) {
-        return text.substring(0, index);
-    }
-
-    return text;
-}
-
-
-function chooseImage(imagesData) {
-    for (var i = 0; i < imagesData.length; i++) {
-        var image = imagesData[i];
-
-        var title = image.title;
-
-        var info = image.imageinfo[0];
-        var mime = info.mime;
-        var url = info.url;
-        var size = info.size;
-
-        // For unwanted images, such as wikipedia icons, portal images and some maps
-        if (containsAny(title, filterList) || containsAny(url, filterList)) {
-            continue;
-        } else if (mime.indexOf('application') !== -1 || mime.indexOf('tif') !== -1) {
-            continue;
-        }
-
-        // Giant image or icon
-        if (size >= 5000000 || size <= 40000) {
-            continue;
-        }
-
-        return url;
-    }
-}
-
-function expandSuperTree(svgContainer, tree) {
-    if (tree.isAtKingdomLevel()) {
-        console.info("Reached kingdom level. Can't go up.");
-        return;
-    }
-
-    removeInformationPanelContent();
-    hideSidebar();
-    scrollToTop();
-
-    tree.setRootToParent();
-
-    addRoot(svgContainer, tree);
-
-    tree.fetchBasicChildrenInformation(function (children) {
-        addChildren(svgContainer, tree, children);
-    });
-}
-
-function showChildren(data, svgContainer, tree) {
-    if (tree.isAtSpeciesLevel()) {
-        console.info("Reached species level. Can't go down.");
-        return;
-    }
-
-    var ID = data.id;
-    var informationPaneDatum = getInformationPaneDatum();
-    var currentSpeciesID = informationPaneDatum && informationPaneDatum[0],
-        wikipediaHasInformation = informationPaneDatum[1];
-    if (currentSpeciesID !== ID || !wikipediaHasInformation) {
-        scrollToTop();
-        hideSidebar();
-    }
-
-    if (tree.isChild(ID)) {
-        tree.setRootToChild(ID);
-    } else {
-        tree.setRoot(ID, data);
-    }
-
-    addRoot(svgContainer, tree);
-
-    tree.fetchBasicChildrenInformation(function (children) {
-        addChildren(svgContainer, tree, children);
-        showInformation(data, tree, false);
-    });
-}
-
-
-// UI Stuff
-function scrollToTop() {
-    $('html, body').animate({
-        scrollTop: 0
-    }, 'fast');
-}
-
-// Infomation panel
-
-
-// Sidebar
-
-// The info panel can be a sidebar if the window width is large enough
-// If it is, we use some animations.
-function showSidebar() {
-    $('.sidebar').sidebar('show');
-}
-
-function hideSidebar() {
-    $('.sidebar').sidebar('hide');
-}
-
-function sidebarExists() {
-    return !d3.select('.sidebar').empty()
-}
-
-function scrollToInformationPane() {
-    var informationPane = $('#infoContainer');
-    $('html,body').animate({
-        scrollTop: informationPane.offset().top
-    });
-}
-
-// General
-
-function getInformationPanel() {
-    return d3.select('#infoContainer');
-}
-
-function removeInformationPanelContent() {
-    d3.selectAll('#speciesData').remove();
-    d3.selectAll('#removeIcon').remove();
-
-}
-
-function collapseInformationPanel() {
-    setInformationPaneDatum([0, false]);
-    removeInformationPanelContent();
-    if (sidebarExists()) {
-        hideSidebar();
-    } else {
-        scrollToTop();
-    }
-}
-
-function addRemoveIconToInformationPanel() {
-    getInformationPanel()
-        .append('div')
-        .attr('class', 'ui black icon button')
-        .attr('id', 'removeIcon')
-        .style('margin-top', '20px')
-        .on('click', collapseInformationPanel)
-        .append('i')
-        .attr('class', 'remove icon');
-}
-
-function addSpeciesDataContainer() {
-    getInformationPanel().append('div').attr('id', 'speciesData');
-}
-
-
-function setUpInformationPanel() {
-    removeInformationPanelContent();
-    addRemoveIconToInformationPanel();
-    addSpeciesDataContainer();
-
-    if (sidebarExists()) {
-        showSidebar();
-    }
-}
-
-
-// Loader
-function putWikipediaInfoLoader() {
-    var div = d3.select('#speciesData')
-        .append('div')
-        .attr('id', 'infoLoader')
-        .style('width', '50%')
-        .style('margin', '0 auto');
-
-    div.append('div').attr('class', 'ui large active inline loader');
-    div.append('b').style('margin-left', '20px').text('Fetching information...');
-
-}
-
-function removeWikipediaInfoLoader() {
-    d3.select('#speciesData').select('#infoLoader').remove();
-}
-
-function putChildrenLoader() {
-    var selection = d3.select('#speciesContainer');
-
-    var xPos = verticalBarXPos + barWidth;
-    var yPos = verticalBarLength + 100;
-
-    selection.append('div')
-        .attr('class', 'ui active large inline loader')
-        .style('position', 'absolute')
-        .style('left', xPos.toString() + 'px')
-        .style('top', yPos.toString() + 'px')
-        .attr('id', 'graphLoader')
-}
-
-function removeChildrenLoader() {
-    d3.select('#graphLoader').remove();
-}
-
-// Svg
-function clearSvg(svgContainer) {
-    svgContainer.selectAll('g').remove();
-    svgContainer.selectAll('circle').remove();
-    svgContainer.selectAll('image').remove();
-    svgContainer.selectAll('line').remove();
-}
-
-function clearButtons() {
-    d3.selectAll('.textButton').remove();
-    d3.select('#rootButton').remove();
-}
-
-function resizeSvg(svgContainer, children) {
-    resizeSvgHeight(svgContainer, children);
-}
-
-function resizeSvgHeight(svgContainer, children) {
-    // Distance between two children
-    var contentHeight = Math.max(2 * rootCircleRadius, (children.length - 1) * heightBetweenChildren);
-    var marginHeight = 2 * verticalMargin + verticalBarLength;
-
-    height = contentHeight + marginHeight;
-    svgContainer.attr('height', height);
-}
-
-// Graph UI
-function addNoInformationAvailableText(childrenSelection) {
-    childrenSelection.append('text')
-        .attr('x', verticalBarXPos + 10)
-        .attr('y', verticalMargin + verticalBarLength + 35)
-        .text('No available information')
-        .attr('font-family', 'sans-serif')
-        .attr('font-size', '20px')
-        .attr('fill', 'rgb(83, 83, 83)')
-}
-
-function addRootCircle(svgContainer, tree) {
-    var selection = createRootDiv();
-    var button = createRootButton(selection, svgContainer);
-
-    if (tree.isAtKingdomLevel()) {
-        button.attr('class', 'active big ui red button').text('Life');
-    } else {
-        var name = getName(tree.root);
-        button.attr('class', 'big ui red icon button').text(name);
-        button.append('i').attr('class', 'level up icon');
-
-        createRootInformationButton(selection, tree);
-    }
-}
-
-function createRootDiv() {
-    return d3.select("#speciesContainer")
-        .append('div')
-        .style('position', 'absolute')
-        .style("left", rootCircleCenterXPos.toString() + 'px')
-        .style("top", verticalMargin.toString() + 'px')
-        .attr('id', 'rootButton');
-}
-
-function createRootButton(selection, svgContainer) {
-    return selection
-        .append('div')
-        .on("click", function (data) {
-            expandSuperTree(svgContainer, tree);
-        });
-}
-
-function createRootInformationButton(selection, tree) {
-    return selection.append('div')
-        .attr('class', 'big ui green icon button')
-        .on("click", function () {
-            showInformation(tree.root, tree, true);
-        })
-        .append('i')
-        .attr('class', 'icon info letter');
-
-}
-
-function addLinesFromRootToVerticalBar(svgContainer) {
-    var height = svgContainer.attr('height');
-
-    svgSelection.append('line')
-        .attr('x1', rootCircleCenterXPos + 50)
-        .attr('y1', verticalMargin + rootCircleRadius)
-        .attr('x2', rootCircleCenterXPos + 50)
-        .attr('y2', verticalMargin + rootCircleRadius + verticalBarLength)
-        .attr('stroke-width', 5)
-        .attr('stroke', 'black');
-
-    svgSelection.append('line')
-        .attr('x1', rootCircleCenterXPos + 50)
-        .attr('y1', verticalMargin + rootCircleRadius + verticalBarLength)
-        .attr('x2', verticalBarXPos)
-        .attr('y2', verticalMargin + rootCircleRadius + verticalBarLength)
-        .attr('stroke-width', 5)
-        .attr('stroke', 'black');
-}
-
-function addVerticalLine(svgContainer) {
-    var height = svgContainer.attr('height');
-
-    svgSelection.append('line')
-        .attr('x1', verticalBarXPos)
-        .attr('y1', verticalMargin + verticalBarLength)
-        .attr('x2', verticalBarXPos)
-        .attr('y2', height - verticalMargin)
-        .attr('stroke-width', 5)
-        .attr('stroke', 'black');
-}
-
-function addHorizontalBars(childrenSelection, numChildren) {
-    for (var i = 0; i < numChildren; i++) {
-        var height = i * heightBetweenChildren;
-        var yPos = height + verticalMargin + verticalBarLength;
-
-
-        childrenSelection.append('line')
+function SpeciesGraph(tree) {
+    var self = this;
+    this.tree = tree;
+    this.height = 500;
+    var speciesContainerSelection,
+        svgSelection,
+        childrenSelection;
+
+    this.setUp = function (page) {
+        self.page = page;
+        self.speciesContainerSelection = d3.select("#speciesContainer");
+
+        var width = Math.min(1000, $(window).width());
+
+        self.svgSelection = self.speciesContainerSelection.append("svg")
+            .attr('width', width)
+            .attr('height', self.height);
+    };
+
+    this.resizeSvg = function (numChildren) {
+        self.resizeSvgHeight(numChildren);
+    };
+
+    this.resizeSvgHeight = function (numChildren) {
+        // Distance between two children
+        var contentHeight = Math.max(2 * buttonRadius, (numChildren - 1) * heightBetweenChildren);
+        var marginHeight = 2 * verticalMargin + verticalBarOffset;
+
+        self.height = contentHeight + marginHeight;
+        self.svgSelection.attr('height', self.height);
+    };
+
+    this.clearSvg = function () {
+        self.svgSelection.selectAll('g').remove();
+        self.svgSelection.selectAll('circle').remove();
+        self.svgSelection.selectAll('image').remove();
+        self.svgSelection.selectAll('line').remove();
+    };
+
+
+    this.addVerticalLine = function () {
+        var height = self.svgSelection.attr('height');
+
+        self.svgSelection.append('line')
             .attr('x1', verticalBarXPos)
-            .attr('y1', yPos)
-            .attr('x2', verticalBarXPos + barWidth)
-            .attr('y2', yPos)
+            .attr('y1', rootBottom)
+            .attr('x2', verticalBarXPos)
+            .attr('y2', height - verticalMargin)
             .attr('stroke-width', 5)
             .attr('stroke', 'black');
-    }
-}
+    };
 
-function addChildrenTextButton(svgContainer, childrenData, tree) {
-    var selection = d3.select("#speciesContainer");
-    var buttons = selection.selectAll('.textButton')
-        .data(childrenData)
-        .enter()
-        .append('div');
+    this.addRoot = function () {
+        self.clearSvg();
+        self.clearButtons();
+        self.addRootCircle();
+        self.putChildrenLoader();
+    };
 
-    var xPos = verticalBarXPos + barWidth;
-    buttons.style('position', 'absolute')
-        .style('left', xPos.toString() + 'px')
-        .style('top', function (data, index) {
-            var height = index * heightBetweenChildren + verticalBarLength + 8;
-            return height.toString() + 'px';
-        })
-        .attr('class', 'textButton');
+    this.clearButtons = function () {
+        d3.selectAll('.textButton').remove();
+        d3.select('#rootButton').remove();
+    };
 
+    this.addRootCircle = function () {
+        var rootCircleDivSelection = self.createRootCircleDiv();
+        var buttonSelection = self.createRootButton(rootCircleDivSelection);
 
-    var size;
-    if (width > 1000) {
-        size = "";
-    } else {
-        size = "small"
-    }
-    addTextToButtons(buttons, size, svgContainer, tree);
-    addIconToButtons(buttons, size, tree);
-}
+        if (self.tree.isAtKingdomLevel()) {
+            buttonSelection.attr('class', 'active big ui red button').text('Life');
+        } else {
+            var name = getName(self.tree.root);
+            buttonSelection.attr('class', 'big ui red icon button').text(name);
+            buttonSelection.append('i').attr('class', 'level up icon');
 
-function addTextToButtons(buttons, size, svgContainer, tree) {
-    var isAtSpeciesLevel = tree.isAtSpeciesLevel();
-
-    var button = buttons.append('div');
-    if (isAtSpeciesLevel) {
-        button.attr('class', 'ui active blue ' + size + ' button');
-    } else {
-        button.attr('class', 'ui blue labeled icon ' + size + ' button');
-        button.on('click', function (data) {
-            showChildren(data, svgContainer, tree);
-        });
-    }
-
-
-    button.text(function (data) {
-        var text = getName(data);
-        return toTitleCase(text);
-    }).style('width', function (data) {
-        var text = getName(data);
-        var width = Math.max(200, text.length * 9 + 100);
-        return width.toString() + 'px';
-    });
-
-    if (!isAtSpeciesLevel) {
-        button.append('i').attr('class', 'level down icon');
-    }
-}
-
-function addIconToButtons(buttons, size, tree) {
-
-    buttons.append('div')
-        .attr('class', 'ui green icon ' + size + ' button')
-        .on("click", function (data) {
-            showInformation(data, tree, true);
-        })
-        .append('i')
-        .attr('class', 'icon info letter');
-}
-
-function sortByNumberDescendants(childrenData) {
-    return childrenData.sort(function (a, b) {
-        var keyA = a.numDescendants || 0,
-            keyB = b.numDescendants || 0;
-        // Compare the 2 dates
-        if (keyA > keyB) return -1;
-        if (keyA < keyB) return 1;
-        return 0;
-    });
-}
-
-function addChildrenToSvg(svgContainer, tree, childrenData) {
-    var childrenSelection = svgContainer.append('g').attr('id', 'childrenGroup');
-    var numChildren = childrenData.length;
-
-    if (numChildren === 0) {
-        addNoInformationAvailableText(childrenSelection);
-    } else {
-        childrenData = sortByNumberDescendants(childrenData);
-        addHorizontalBars(childrenSelection, numChildren);
-        addChildrenTextButton(svgContainer, childrenData, tree);
-    }
-}
-
-function addRoot(svgContainer, tree) {
-    clearSvg(svgContainer);
-    clearButtons();
-    addRootCircle(svgContainer, tree);
-    addLinesFromRootToVerticalBar(svgContainer);
-    putChildrenLoader();
-}
-
-function addChildren(svgContainer, tree, children) {
-    removeChildrenLoader();
-    resizeSvg(svgContainer, children);
-    addVerticalLine(svgContainer);
-    addChildrenToSvg(svgContainer, tree, children);
-}
-
-function setUp() {
-    var selection = d3.select("#speciesContainer");
-    var contentDiv = d3.select('#contentDiv');
-
-    var svgSelection = setUpSvg(selection);
-
-    var windowWidth = $(window).width();
-    if (windowWidth > 1000) {
-        adjustPadding(contentDiv);
-        addSidebar(contentDiv, windowWidth);
-    } else {
-        addSegment(contentDiv);
-    }
-
-    setUpSearchBox();
-    return svgSelection;
-}
-
-function setUpSvg(selection) {
-    return selection.append("svg")
-        .attr('width', width)
-        .attr('height', height);
-}
-
-function adjustPadding(contentDiv) {
-    contentDiv.style('padding', '2em 2em 8em !important')
-        .style('margin-left', '20px');
-}
-
-function addSidebar(contentDiv, windowWidth) {
-    contentDiv.insert('div', '#speciesContainer')
-        .attr('id', 'infoContainer')
-        .attr('class', 'ui right very wide sidebar verticalLine')
-        .attr('style', 'margin-top: 58px !important;');
-    adjustHeaderWidth(windowWidth);
-}
-
-function adjustHeaderWidth(windowWidth) {
-    d3.select('#headerMenu')
-        .attr('style', 'width: ' + windowWidth.toString() + 'px !important;');
-}
-
-function addSegment(contentDiv) {
-    contentDiv.insert('div', '.ui.segment')
-        .attr('id', 'infoContainer');
-}
-
-function setUpSearchBox() {
-    d3.select('#searchIcon').on('click', function () {
-        var searchText = $('searchInput').val();
-        if (searchText) {
-            search(searchText);
+            self.createRootInformationButton(rootCircleDivSelection);
         }
-    });
+    };
 
-    $('#searchInput').keypress(function (event) {
-        var keyCode = event.which || event.keyCode;
-        if (keyCode !== 13) {
+    this.createRootCircleDiv = function () {
+        return self.speciesContainerSelection
+            .append('div')
+            .style('position', 'absolute')
+            .style("left", rootCircleCenterXPos.toString() + 'px')
+            .style("top", verticalMargin.toString() + 'px')
+            .attr('id', 'rootButton');
+    };
+
+    this.createRootButton = function (rootCircleDivSelection) {
+        return rootCircleDivSelection
+            .append('div')
+            .on("click", function () {
+                self.page.expandSuperTree();
+            });
+    };
+
+    this.createRootInformationButton = function (rootCircleDivSelection) {
+        return rootCircleDivSelection.append('div')
+            .attr('class', 'big ui green icon button')
+            .on("click", function () {
+                self.page.showInformation(self.tree.root, true);
+            })
+            .append('i')
+            .attr('class', 'icon info letter');
+
+    };
+
+    this.putChildrenLoader = function () {
+        var xPos = verticalBarXPos + barWidth;
+        var yPos = verticalBarOffset + 100;
+
+        self.speciesContainerSelection.append('div')
+            .attr('class', 'ui active large inline loader')
+            .style('position', 'absolute')
+            .style('left', xPos.toString() + 'px')
+            .style('top', yPos.toString() + 'px')
+            .attr('id', 'graphLoader')
+    };
+
+    this.removeChildrenLoader = function () {
+        d3.select('#graphLoader').remove();
+    };
+
+    this.addChildren = function (children) {
+        self.removeChildrenLoader();
+        self.resizeSvg(children.length);
+        self.addVerticalLine();
+        self.addChildrenToSvg(children);
+    };
+
+    this.addChildrenToSvg = function (childrenData) {
+        self.childrenSelection = self.svgSelection.append('g').attr('id', 'childrenGroup');
+        var numChildren = childrenData.length;
+
+        if (numChildren === 0) {
+            self.addNoInformationAvailableText();
+        } else {
+            childrenData = self.sortByNumberDescendants(childrenData);
+            self.addHorizontalBars(numChildren);
+            self.addChildrenTextButton(childrenData);
+        }
+    };
+
+    this.addNoInformationAvailableText = function () {
+        var text;
+        if (self.tree.isAtSubSpeciesLevel) {
+            text = "No subspecies found";
+        } else {
+            text = "No available information";
+        }
+
+        self.childrenSelection.append('text')
+            .attr('x', verticalBarXPos + 10)
+            .attr('y', verticalMargin + verticalBarOffset + 35)
+            .text(text)
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', '20px')
+            .attr('fill', 'rgb(83, 83, 83)')
+    };
+
+    this.sortByNumberDescendants = function (childrenData) {
+        return childrenData.sort(function (a, b) {
+            var keyA = a.numDescendants || 0,
+                keyB = b.numDescendants || 0;
+            // Compare the 2 dates
+            if (keyA > keyB) return -1;
+            if (keyA < keyB) return 1;
+            return 0;
+        });
+    };
+
+    this.addHorizontalBars = function (numChildren) {
+        for (var i = 0; i < numChildren; i++) {
+            var height = i * heightBetweenChildren;
+            var yPos = verticalMargin + verticalBarOffset + height;
+
+
+            self.childrenSelection.append('line')
+                .attr('x1', verticalBarXPos)
+                .attr('y1', yPos)
+                .attr('x2', verticalBarXPos + barWidth)
+                .attr('y2', yPos)
+                .attr('stroke-width', 5)
+                .attr('stroke', 'black');
+        }
+    };
+
+    this.addChildrenTextButton = function (childrenData) {
+        var buttons = self.speciesContainerSelection.selectAll('.textButton')
+            .data(childrenData)
+            .enter()
+            .append('div');
+
+        var xPos = verticalBarXPos + barWidth;
+        buttons.style('position', 'absolute')
+            .style('left', xPos.toString() + 'px')
+            .style('top', function (data, index) {
+                var height = index * heightBetweenChildren + verticalBarOffset + 8;
+                return height.toString() + 'px';
+            })
+            .attr('class', 'textButton');
+
+
+        var width = $(window).width();
+        var size;
+        if (width > 1000) {
+            size = "";
+        } else {
+            size = "small"
+        }
+        self.addTextToButtons(buttons, size);
+        self.addIconToButtons(buttons, size);
+    };
+
+    this.addTextToButtons = function (buttons, size) {
+        var isAtSubSpeciesLevel = self.tree.isAtSubSpeciesLevel();
+
+        var button = buttons.append('div');
+        if (isAtSubSpeciesLevel) {
+            button.attr('class', 'ui active blue ' + size + ' button');
+        } else {
+            button.attr('class', 'ui blue labeled icon ' + size + ' button');
+            button.on('click', function (data) {
+                self.page.showChildren(data, self.svgSelection, self.tree);
+            });
+        }
+
+
+        button.text(function (data) {
+            var text = getName(data);
+            return toTitleCase(text);
+        }).style('width', function (data) {
+            var text = getName(data);
+            var width = Math.max(200, text.length * 9 + 100);
+            return width.toString() + 'px';
+        });
+
+        if (!isAtSubSpeciesLevel) {
+            button.append('i').attr('class', 'level down icon');
+        }
+    };
+
+    this.addIconToButtons = function (buttons, size) {
+        buttons.append('div')
+            .attr('class', 'ui green icon ' + size + ' button')
+            .on("click", function (data) {
+                self.page.showInformation(data, true);
+            })
+            .append('i')
+            .attr('class', 'icon info letter');
+    };
+
+};
+
+function InformationPane() {
+    var self = this;
+    this.wiki = new Wikipedia();
+
+    var paneSelection,
+        speciesInformationSelection,
+        sidebarExists;
+
+    this.MAX_IMAGE_SIZE = 5000000;
+    this.MIN_IMAGE_SIZE = 40000;
+
+    var wikipediaImages = ['logo', 'red pencil', 'wikibooks', 'feature', 'star', 'symbol', 'vote', 'icon', 'question_book', 'disamb', 'edit', 'ambox', 'wiki_letter', 'speakerlink', 'padlock'];
+    var portalImages = ['caribou from wagon trails', 'rose amber', 'france loiret', 'Leaf_1_web', 'Martinique.web', 'Tiger_in_the_water'];
+    var unwantedImages = ['map'];
+    this.filterList = _.union(wikipediaImages, portalImages, unwantedImages);
+
+    this.setUp = function (page) {
+        self.page = page;
+
+        var windowWidth = $(window).width();
+        if (windowWidth > 1000) {
+            self.addSidebar();
+            self.addSpeciesDataContainer();
+            self.sidebarExists = true;
+
+            self.page.adjustHeaderWidth(windowWidth);
+        } else {
+            self.addSegment();
+        }
+    };
+
+    this.resetInformationPanel = function () {
+        self.removeInformationPanelContent();
+        self.addRemoveIconToInformationPanel();
+        self.addSpeciesDataContainer();
+
+        if (self.sidebarExists) {
+            self.showSidebar();
+        }
+    };
+
+    this.collapseInformationPanel = function () {
+        self.setInformationPaneDatum([0, false]);
+        self.removeInformationPanelContent();
+        if (self.sidebarExists) {
+            self.hideSidebar();
+        } else {
+            self.page.scrollToTop();
+        }
+    };
+
+    this.removeInformationPanelContent = function () {
+        d3.selectAll('#speciesData').remove();
+        d3.selectAll('#removeIcon').remove();
+
+        self.speciesInformationSelection = undefined;
+    };
+
+    this.addRemoveIconToInformationPanel = function () {
+        self.paneSelection.append('div')
+            .attr('class', 'ui black icon button')
+            .attr('id', 'removeIcon')
+            .style('margin-top', '20px')
+            .style('margin-left', '10px')
+            .on('click', self.collapseInformationPanel)
+            .append('i')
+            .attr('class', 'remove icon');
+    };
+
+    this.addSpeciesDataContainer = function () {
+        self.speciesInformationSelection = self.paneSelection.append('div').attr('id', 'speciesData');
+    };
+
+    this.addSidebar = function () {
+        self.paneSelection = d3.select('#contentDiv')
+            .insert('div', '#speciesContainer')
+            .attr('id', 'infoContainer')
+            .attr('class', 'ui right very wide sidebar verticalLine')
+            .attr('style', 'margin-top: 58px !important;');
+    };
+
+    this.addSegment = function () {
+        self.paneSelection = d3.select('#contentDiv')
+            .insert('div', '.ui.segment')
+            .attr('id', 'infoContainer');
+    };
+
+    this.showInformation = function (data, scrollToInformationPanel) {
+        self.resetInformationPanel();
+        self.showWikipediaInformation(data, scrollToInformationPanel);
+    };
+
+    this.showWikipediaInformation = function (nodeData, scrollToInformationPanel) {
+        self.putWikipediaInfoLoader();
+
+        var speciesName = getScientificName(nodeData);
+        var commonName = getCommonName(nodeData);
+        var ID = nodeData.id;
+
+        self.wiki.article(commonName, speciesName, function (wikiData) {
+            self.removeWikipediaInfoLoader();
+
+            if (wikiData) {
+                // Todo: what is this? can we improve it
+                self.setInformationPaneDatum([ID, true]);
+
+
+                self.addWikipediaTextToSelection(nodeData, wikiData);
+                if (!self.sidebarExists && scrollToInformationPanel) {
+                    self.scrollToInformationPane();
+                }
+
+                self.addWikipediaImage(wikiData.rank, commonName, speciesName);
+            } else {
+                // Todo: what is this? can we improve it
+                self.setInformationPaneDatum([ID, false]);
+
+
+                self.addNoAvailableInformationText();
+            }
+        });
+    };
+
+    // The info panel can be a sidebar if the window width is large enough
+    // If it is, we use some animations.
+    this.scrollToInformationPane = function () {
+        var informationPane = $('#infoContainer');
+        $('html,body').animate({
+            scrollTop: informationPane.offset().top
+        });
+    };
+
+    this.addWikipediaImage = function (rank, commonName, speciesName) {
+        self.wiki.image(commonName, speciesName, function (imagesData) {
+            var url = self.chooseImage(imagesData || []);
+            if (url) {
+                self.addWikipediaImageToSelection(commonName, speciesName, rank, url);
+            }
+        });
+    };
+
+    this.addWikipediaImageToSelection = function (commonName, speciesName, rank, url) {
+        self.speciesInformationSelection.insert('img', '#content')
+            .attr('src', url)
+            .attr('alt', commonName + ' - ' + speciesName + ' (' + rank + ')')
+            .attr('class', 'ui huge image');
+    };
+
+    this.addWikipediaTextToSelection = function (nodeData, wikiData) {
+        var title = wikiData.title;
+        var raw_content = wikiData.extract;
+        var content = self.removeWikiCruft(raw_content);
+
+        // Add title
+        var titleText = title + " (" + nodeData.rank + ')';
+        self.speciesInformationSelection.append('h1')
+            .attr('class', 'header')
+            .text(titleText);
+
+        // Add content
+        self.speciesInformationSelection.append('div')
+            .attr('id', 'content')
+            .style('padding-left', '10px')
+            .html(content);
+    };
+
+    this.addNoAvailableInformationText = function (divSelection) {
+        self.speciesInformationSelection.append('h1').text('No available information');
+    };
+
+    this.removeWikiCruft = function (text) {
+        var lowercaseText = text.toLowerCase();
+
+        var index = lowercaseText.indexOf('see also');
+        if (index !== -1) {
+            return text.substring(0, index);
+        }
+
+        var index = lowercaseText.indexOf('references');
+        if (index !== -1) {
+            return text.substring(0, index);
+        }
+
+        var index = lowercaseText.indexOf('bibliography');
+        if (index !== -1) {
+            return text.substring(0, index);
+        }
+
+        return text;
+    };
+
+
+    this.chooseImage = function (imagesData) {
+        for (var i = 0; i < imagesData.length; i++) {
+            var image = imagesData[i];
+
+            var title = image.title;
+
+            var info = image.imageinfo[0];
+            var mime = info.mime;
+            var url = info.url;
+            var size = info.size;
+
+            // For unwanted images, such as wikipedia icons, portal images and some maps
+            if (containsAny(title, self.filterList) || containsAny(url, self.filterList)) {
+                continue;
+            } else if (mime.indexOf('application') !== -1 || mime.indexOf('tif') !== -1) {
+                continue;
+            }
+
+            // Giant image or icon
+            if (size >= self.MAX_IMAGE_SIZE || size <= self.MIN_IMAGE_SIZE) {
+                continue;
+            }
+
+            return url;
+        }
+    };
+
+    this.putWikipediaInfoLoader = function () {
+        var div = self.speciesInformationSelection
+            .append('div')
+            .attr('id', 'infoLoader')
+            .style('width', '50%')
+            .style('margin', '0 auto');
+
+        div.append('div').attr('class', 'ui large active inline loader');
+        div.append('b').style('margin-left', '20px').text('Fetching information...');
+    };
+
+    this.removeWikipediaInfoLoader = function () {
+        d3.select('#infoLoader').remove();
+    };
+
+    this.showSidebar = function () {
+        $('.sidebar').sidebar('show');
+    };
+
+    this.hideSidebar = function () {
+        $('.sidebar').sidebar('hide');
+    };
+
+    this.setInformationPaneDatum = function (value) {
+        // Binds data to the information pane. The data is [id, has_wikipedia_content]. This allows us
+        // to avoid reloading data when we go into sublevel if information pane has already the correct data.
+        self.paneSelection.datum(value);
+    };
+
+    this.getInformationPaneDatum = function () {
+        return self.paneSelection.datum() || [-1, false];
+    };
+}
+
+function SearchZone() {
+    var self = this;
+
+    var searchResults,
+        resultList;
+
+    this.searchInput = d3.select('#searchInput');
+    this.searchIcon = d3.select('#searchIcon');
+
+    this.setUp = function (page) {
+        self.page = page;
+        self.searchResults = d3.select('#searchResults');
+
+        self.searchIcon.on('click', function () {
+            var searchText = self.searchInput.property('value');
+            if (searchText) {
+                self.search(searchText);
+            }
+        });
+
+        self.searchIcon.on('touchstart', function () {
+            var searchText = self.searchInput.property('value');
+            if (searchText) {
+                self.search(searchText);
+            }
+        });
+
+        self.searchInput.on('keydown', function () {
+            var keyCode = d3.event.which || d3.event.keyCode;
+            if (keyCode !== 13) {
+                return;
+            }
+            var searchText = self.searchInput.property('value');
+            if (searchText) {
+                self.search(searchText);
+            }
+        })
+    };
+
+    this.search = function (text) {
+        var url = encodeURI('getData?name=' + text);
+        self.clearPreviousResults();
+        self.putSearchLoader();
+        $.getJSON(url, function (data) {
+            if (data.length > 0) {
+                self.processSearch(data);
+            } else {
+                self.processSearch(undefined);
+            }
+        });
+    };
+
+    this.processSearch = function (results) {
+        self.removeSearchLoader();
+        if (results) {
+            results = self.fixRanks(results);
+            var sortedResults = self.sortSearchResults(results);
+            self.addNewResults(sortedResults);
+        } else {
+            self.addNoResultFoundText();
+        }
+    };
+
+    this.sortSearchResults = function (results) {
+        return results.sort(function (a, b) {
+            var aID = self.getRankID(a), bID = self.getRankID(b);
+            if (aID > bID) return 1;
+            else if (aID < bID) return -1;
+            else return 0
+        });
+    };
+
+    this.putSearchLoader = function () {
+        var div = self.searchResults
+            .append('div')
+            .attr('id', 'searchLoader')
+            .style('margin-top', '20px');
+
+        div.append('div').attr('class', 'ui large active inline loader');
+        div.append('b').style('margin-left', '20px').text('Fetching information...');
+    };
+
+    this.removeSearchLoader = function () {
+        d3.select('#searchLoader').remove();
+    };
+
+    this.getRank = function (result) {
+        if (result.rank) {
+            return result.rank.toLowerCase()
+        } else {
+            var levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+            for (var i = levels.length - 1; i >= 0; i--) {
+                if (_.has(result, levels[i])) {
+                    return levels[i];
+                }
+            }
+
+            return 'unknown'
+        }
+    };
+
+    this.getRankID = function (result) {
+        var levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+        if (result.rank) {
+            return levels.indexOf(result.rank.toLowerCase()) + 1;
+        }
+        else {
+            for (var i = levels.length - 1; i >= 0; i--) {
+                if (_.has(result, levels[i])) {
+                    return i + 1;
+                }
+            }
+
+            throw new Error('Cannot find id');
+        }
+    };
+
+    this.clearPreviousResults = function () {
+        if (self.resultList) {
+            self.resultList.remove();
+        }
+    };
+
+    this.fixRanks = function (results) {
+        _.each(results, function (result) {
+            result.rank = self.getRank(result);
+        });
+
+        return results;
+    };
+
+    this.addNewResults = function (results) {
+        self.resultList = self.searchResults
+            .append('ul')
+            .attr('id', 'resultsList');
+
+        self.resultList.selectAll('li')
+            .data(results)
+            .enter()
+            .append('li')
+            .append('a')
+            .on('click', function (data) {
+                self.clearPreviousResults();
+                self.page.showChildren(data)
+            })
+            .text(function (result) {
+                var name = result.vernacularName || result.canonicalName;
+                return toTitleCase(name) + ' (' + result.rank + ')';
+            });
+    };
+
+    this.addNoResultFoundText = function () {
+        self.resultList = self.searchResults
+            .append('ul')
+            .attr('id', 'resultsList');
+
+        self.resultList.append('li')
+            .text('No results');
+    };
+}
+
+function Page() {
+    var self = this;
+
+    this.tree = new Tree();
+    this.speciesGraph = new SpeciesGraph(this.tree);
+    this.search = new SearchZone();
+    this.informationPane = new InformationPane();
+
+    this.setUp = function () {
+        self.speciesGraph.setUp(this);
+        self.search.setUp(this);
+        self.informationPane.setUp(this);
+
+        var windowWidth = $(window).width();
+        if (windowWidth > 1000) {
+            self.adjustPadding();
+        }
+
+    };
+
+    this.adjustPadding = function () {
+        d3.select('#contentDiv').style('padding', '2em 2em 8em !important')
+            .style('margin-left', '20px');
+    };
+
+    this.start = function () {
+        self.speciesGraph.addRoot();
+        self.tree.fetchBasicChildrenInformation(function (children) {
+            self.speciesGraph.addChildren(children);
+        });
+    };
+
+    this.showInformation = function (data, scrollToInformationPanel) {
+        self.informationPane.showInformation(data, scrollToInformationPanel)
+    };
+
+    this.showChildren = function (data) {
+        if (self.tree.isAtSubSpeciesLevel()) {
+            console.info("Reached sub species level. Can't go down.");
             return;
         }
-        var searchText = $('#searchInput').val();
-        if (searchText) {
-            search(searchText);
-        }
-    })
-}
 
-function search(text) {
-    var url = encodeURI('getData?name=' + text);
-    clearPreviousResults();
-    putSearchLoader();
-    $.getJSON(url, function (data) {
-        if (data.length > 0) {
-            processSearch(data);
+        var ID = data.id;
+        var informationPaneDatum = self.informationPane.getInformationPaneDatum();
+        var currentSpeciesID = informationPaneDatum && informationPaneDatum[0],
+            wikipediaHasInformation = informationPaneDatum[1];
+        if (currentSpeciesID !== ID || !wikipediaHasInformation) {
+            self.scrollToTop();
+            self.informationPane.hideSidebar();
+        }
+
+        if (self.tree.isChild(ID)) {
+            self.tree.setRootToChild(ID);
         } else {
-            processSearch(undefined);
-        }
-    });
-}
-
-function sortSearchResults(results) {
-    return results.sort(function (a, b) {
-        var aID = getRankID(a), bID = getRankID(b);
-        if (aID > bID) return 1;
-        else if (aID < bID) return -1;
-        else return 0
-    });
-}
-function processSearch(results) {
-    removeSearchLoader();
-    if (results) {
-        fixRanks(results);
-        var sortedResults = sortSearchResults(results);
-        addNewResults(sortedResults);
-    } else {
-        addNoResultFoundText();
-    }
-}
-
-function getRank(result) {
-    if (result.rank) {
-        return result.rank.toLowerCase()
-    } else {
-        var levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
-        for (var i = levels.length - 1; i >= 0; i--) {
-            if (_.has(result, levels[i])) {
-                return levels[i];
-            }
+            self.tree.setRoot(ID, data);
         }
 
-        return 'unknown'
-    }
-}
+        self.speciesGraph.addRoot();
 
-function getRankID(result) {
-    var levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
-    if (result.rank) {
-        return levels.indexOf(result.rank.toLowerCase()) + 1;
-    }
-    else {
-        for (var i = levels.length - 1; i >= 0; i--) {
-            if (_.has(result, levels[i])) {
-                return i + 1;
-            }
-        }
-
-        throw new Error('Cannot find id');
-    }
-}
-
-function clearPreviousResults() {
-    d3.select('#resultsList').remove();
-}
-
-function fixRanks(results) {
-    _.each(results, function (result) {
-        result.rank = getRank(result);
-    });
-}
-function addNewResults(results) {
-    d3.select('#searchResults')
-        .append('ul')
-        .attr('id', 'resultsList')
-        .selectAll('li')
-        .data(results)
-        .enter()
-        .append('li')
-        .append('a')
-        .on('click', function (result) {
-            clearPreviousResults();
-            showChildren(result, svgSelection, tree)
-        })
-        .text(function (result) {
-            var name = result.vernacularName || result.canonicalName;
-            return toTitleCase(name) + ' (' + result.rank + ')';
+        self.tree.fetchBasicChildrenInformation(function (children) {
+            self.speciesGraph.addChildren(children);
+            self.informationPane.showInformation(data, false);
         });
+    };
+
+    this.expandSuperTree = function () {
+        if (self.tree.isAtKingdomLevel()) {
+            console.info("Reached kingdom level. Can't go up.");
+            return;
+        }
+
+        self.informationPane.removeInformationPanelContent();
+        self.informationPane.hideSidebar();
+        self.scrollToTop();
+
+        self.tree.setRootToParent();
+
+        self.speciesGraph.addRoot();
+
+        self.tree.fetchBasicChildrenInformation(function (children) {
+            self.speciesGraph.addChildren(children);
+        });
+    };
+
+    this.adjustHeaderWidth = function (windowWidth) {
+        // This is called by the information pane when creating a sidebar
+        // I chose to put it here because it seems to be more about the page
+        // than the information pane.
+        d3.select('#headerMenu')
+            .attr('style', 'width: ' + windowWidth.toString() + 'px !important;');
+    };
+
+    this.scrollToTop = function () {
+        $('html, body').animate({
+            scrollTop: 0
+        }, 'fast');
+    }
 }
 
-function addNoResultFoundText() {
-    d3.select('#searchResults')
-        .append('ul')
-        .attr('id', 'resultsList')
-        .append('li')
-        .text('No results');
-}
+var page = new Page();
+page.setUp();
+page.start();
 
-function putSearchLoader() {
-    var div = d3.select('#searchResults')
-        .append('div')
-        .attr('id', 'searchLoader')
-        .style('margin-top', '20px');
 
-    div.append('div').attr('class', 'ui large active inline loader');
-    div.append('b').style('margin-left', '20px').text('Fetching information...');
-}
-
-function removeSearchLoader() {
-    d3.select('#searchLoader').remove();
-}
-
-var svgSelection = setUp();
-var tree = new Tree();
-var wiki = new Wikipedia();
-addRoot(svgSelection, tree);
-tree.fetchBasicChildrenInformation(function (children) {
-    addChildren(svgSelection, tree, children);
-});
