@@ -26,28 +26,6 @@ function GBIF() {
         });
     };
 
-
-    this.fetchChildDescription = function (childID, onSuccess) {
-        var url = this._buildUrl(childID) + '/descriptions';
-        this._fetchData(url, function (response) {
-            var result = [];
-
-            var data = response[0].results;
-            _.forEach(data, function (description) {
-                if (description.language === "ENGLISH") {
-                    result.push({
-                        "type": description.type,
-                        "description": description.description
-                    });
-                }
-            });
-
-            self.childrenDescription[childID] = result;
-            onSuccess(result);
-        });
-    };
-
-
     this._exchangeKeyWithID = function (results) {
         _.each(results, function(result) {
             self.exchangeKeyWithId(result);
@@ -81,24 +59,6 @@ function GBIF() {
     this._fetchRootNodesBasicInformation = function (callback) {
         $.getJSON('data/data.json', callback);
     };
-
-    this._fetchChildrenData = function (onSuccess) {
-        var urls = this._buildUrls(this.childrenIDs);
-        this._fetchMultipleData(urls, function (results) {
-            var parsedResults = [];
-            _.each(results, function (result) {
-                var child = result[0];
-
-                // Convert string ID to integer ID
-                child.key = parseInt(child.key);
-                self.childrenDescription[child.key] = child;
-
-                parsedResults.push(child);
-            });
-            onSuccess(parsedResults);
-        });
-    };
-
 
     this._buildUrls = function (IDs) {
         return _.map(IDs, this._buildUrl);
@@ -176,10 +136,6 @@ function GBIF() {
     this.getHighConfidenceMatch = function (name, results) {
         var lowerCaseName = name.toLowerCase();
         return _.find(results, function (result) {
-            //            if (result.synonym !== false) {
-            //                return false;
-            //            }
-
             var vernacularName = result.vernacularName;
             return vernacularName && vernacularName.toLowerCase() === lowerCaseName;
         })
@@ -188,10 +144,6 @@ function GBIF() {
     this.getLowConfidenceMatch = function (name, results) {
         var lowerCaseName = name.toLowerCase();
         return _.find(results, function (result) {
-            //            if (result.synonym !== false) {
-            //                return false;
-            //            }
-
             var resultName = result.canonicalName || result.scientificName;
             return resultName && resultName.toLowerCase() === lowerCaseName;
         })
