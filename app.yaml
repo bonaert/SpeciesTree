@@ -5,6 +5,9 @@ api_version: 1
 threadsafe: true
 default_expiration: "30d"
 
+builtins:
+- deferred: on
+
 handlers:
 - url: /css
   static_dir: css
