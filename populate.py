@@ -1,3 +1,4 @@
+from collections import Counter
 import json
 import logging
 import os
@@ -5,8 +6,10 @@ import os
 from google.appengine.ext import ndb
 from google.appengine.api import urlfetch
 from google.appengine.api import search
+from google.appengine.ext import deferred
 
 import sys
+from google.appengine.runtime import apiproxy_errors
 import constants
 
 
@@ -23,7 +26,7 @@ VIRUS_ID = 8
 ANIMAL_ID = 1
 PLANT_ID = 6
 
-ranks = ['LIFE', 'KINGDOM', 'PHYLUM', 'CLASS', 'ORDER', 'FAMILY', 'GENUS', 'SPECIES']
+ranks = ['LIFE', 'KINGDOM', 'PHYLUM', 'CLASS', 'ORDER', 'FAMILY', 'GENUS', 'SPECIES', 'SUBSPECIES']
 rank_str_to_rank_id = {rank: ID for (ID, rank) in enumerate(ranks)}
 
 index = search.Index(name="organisms")
@@ -41,41 +44,44 @@ class Organism(ndb.Model):
     parentID = ndb.IntegerProperty(default=0)
 
 
+def do_task(host_url, ID, rank_id, levels_to_explore, options):
+    populator = Populator(host_url)
+    populator.get_recursive_children(ID, rank_id, levels_to_explore, options)
+
+
+def add_task(host_url, ID, rank_id, levels_to_explore, options=None):
+    deferred.defer(do_task, host_url, ID, rank_id, levels_to_explore, options)
+
+
 class Populator():
-    def __init__(self, hosturl):
-        self.hosturl = hosturl
+    def __init__(self, host_url):
+        self.host_url = host_url
 
     def populate(self):
         self.get_first_three_levels()
         self.get_common_beings()
 
+    def populate_id(self, ID, rank_id):
+        options = {'is_virus_subgroup': False,
+                   'is_animal_or_plant_subgroup': True}
+        self._get_children(ID, rank_id, options)
+
     def get_first_three_levels(self):
-        self._get_children(0, 1, 3)
+        add_task(self.host_url, 0, 1, 3)
 
     def get_common_beings(self):
-        logging.info("Started fetching common animals")
         beings = constants.BEINGS
 
         options = {'is_virus_subgroup': False,
                    'is_animal_or_plant_subgroup': True}
+
         for being in beings:
             [ID, rank_id] = being
-            logging.info(ID)
-            self._get_children(ID, rank_id, 1, options)
+            add_task(self.host_url, ID, rank_id, 1, options)
 
-        logging.info("Stopped fetching common animals")
-
-        #self._get_children(MAMMAL_ID, 4, 4, options=options)
-        # self._get_children(BIRD_ID, 4, 4)
-        # self._get_children(REPTILE_ID, 4, 4)
-
-    def _get_children(self, ID, rank_id, levels_to_explore=3, options=None):
-        if options is None:
-            options = {'is_virus_subgroup': False,
-                       'is_animal_or_plant_subgroup': False}
-
-        data = self.get_data(ID, rank_id, options)
-        result = self.process_results(ID, data, rank_id, options)
+    def get_recursive_children(self, ID, rank_id, levels_to_explore=3, options=None):
+        options = self.get_options(options)
+        result = self._get_children(ID, rank_id, options)
 
         if levels_to_explore > 1:
             for child in result:
@@ -84,8 +90,20 @@ class Populator():
                      'is_animal_or_plant_subgroup': options['is_animal_or_plant_subgroup'] or child.ID in [ANIMAL_ID,
                                                                                                            PLANT_ID]}
 
-                self._get_children(child.ID, rank_id + 1, levels_to_explore - 1, new_options)
+                add_task(self.host_url, child.ID, rank_id + 1, levels_to_explore - 1, new_options)
 
+    def _get_children(self, ID, rank_id, options=None):
+        options = self.get_options(options)
+        data = self.get_data(ID, rank_id, options)
+        result = self.process_results(ID, data, rank_id, options)
+        return result
+
+    def get_options(self, options):
+        if options is None:
+            return {'is_virus_subgroup': False,
+                    'is_animal_or_plant_subgroup': False}
+        else:
+            return options
 
     def get_data(self, ID, rank_id, options):
         if ID == 0:
@@ -96,80 +114,107 @@ class Populator():
     def get_local_file_data(self):
         url = self.make_local_file_url()
         result = self.fetch(url)
-        if result.status_code == 200:
+        if result is not None and result.status_code == 200:
             return json.loads(result.content)
         else:
             return []
 
     def get_gbif_data(self, ID, rank_id, options):
-        results = self.get_gfib_data_with_limit(ID)
+        do_not_want_to_get_vernacular_name = (rank_id >= 3 and not options['is_animal_or_plant_subgroup'])
 
-        if rank_id >= 3 and not options['is_animal_or_plant_subgroup']:
+        if do_not_want_to_get_vernacular_name:
+            return self.get_gfib_data_with_limit(ID)
+
+        results = self.get_gfid_data_using_different_limits(ID)
+
+        if not self.has_vernacular_names(results):
+            return self.get_vernacular_names(results)
+        else:
             return results
 
+    def get_gfid_data_using_different_limits(self, ID):
         # Tries to use different limits, because changing it sometimes
         # returns the vernacular name if missing in the previouus queries
-        if self.has_vernacular_name(results):
-            logging.info('Children of node with ID %d have vernacular name with no limit' % ID)
-            return results
 
-        logging.info('Children of node with ID %d have no vernacular name with no limit' % ID)
+        results = self.get_gfib_data_with_limit(ID)
+        if self.has_vernacular_names(results):
+            return results
 
         results = self.get_gfib_data_with_limit(ID, 49)
-
-        if self.has_vernacular_name(results):
-            logging.info('Children of node with ID %d have vernacular name with limit 49' % ID)
+        if self.has_vernacular_names(results):
             return results
-        else:
-            logging.info('Children of node with ID %d have no vernacular name with limit 49' % ID)
 
         results = self.get_gfib_data_with_limit(ID, 50)
-
-        if self.has_vernacular_name(results):
-            logging.info('Children of node with ID %d have vernacular name with limit 50' % ID)
+        if self.has_vernacular_names(results):
             return results
-        else:
-            logging.info('Children of node with ID %d have no vernacular name with limit 50' % ID)
 
         results = self.get_gfib_data_with_limit(ID, 100)
-        if self.has_vernacular_name(results):
-            logging.info('Children of node with ID %d have vernacular name with limit 100' % ID)
-            return results
-        else:
-            logging.info('Children of node with ID %d have no vernacular name with limit 100' % ID)
-
-        if ID == 44:
-            logging.info(results)
         return results
 
+    def get_vernacular_names(self, results):
+        for result in results:
+            if 'vernacularName' in result:
+                continue
+
+            url = self.get_vernacular_name_url(result)
+            entries = self.get_all_vernacular_names(url)
+            name = self.choose_vernacular_name(entries)
+
+            if name is not None:
+                result['vernacularName'] = name
+
+        return results
+
+    def get_vernacular_name_url(self, result):
+        return "http://api.gbif.org/v1/species/" + str(result['key']) + '/vernacularNames'
+
+    def get_all_vernacular_names(self, url):
+        data = self.fetch(url)
+        if data is not None:
+            return json.loads(data.content)['results']
+        else:
+            return []
+
+    def choose_vernacular_name(self, entries):
+        english_entries = [entry['vernacularName'] for entry in entries if entry['language'] == "ENGLISH"]
+        return self.get_most_common_element(english_entries)
+
+    def get_most_common_element(self, elements):
+        if elements:
+            return Counter(elements).most_common(1)[0][0]
+        else:
+            return None
 
     def get_gfib_data_with_limit(self, ID, limit=None):
         url = self.make_url(ID, limit=limit)
 
         result = self.fetch(url)
-        if result.status_code != 200:
+        if result is None or result.status_code != 200:
             return []
+        else:
+            return json.loads(result.content)['results']
 
-        return json.loads(result.content)['results']
-
-    def has_vernacular_name(self, results):
+    def has_vernacular_names(self, results):
         for result in results:
             if 'vernacularName' in result:
                 return True
         return False
 
-
     def make_url(self, ID, limit=None):
         if limit is None:
-            return "http://api.gbif.org/v1/species/" + str(ID) + '/children'  # ?limit=100'
+            return "http://api.gbif.org/v1/species/" + str(ID) + '/children'
         else:
             return "http://api.gbif.org/v1/species/" + str(ID) + '/children?limit=' + str(limit)
 
     def make_local_file_url(self):
-        return self.hosturl + '/data/data.json'
+        return self.host_url + '/data/data.json'
 
     def fetch(self, url):
-        return urlfetch.fetch(url)
+        try:
+            return urlfetch.fetch(url)
+        except:
+            logging.error("Deadline exceed for: " + url)
+            return None
 
     def process_results(self, ID, results, rank_id, options):
         selected_results = self.select_results(results, rank_id, options)
@@ -178,11 +223,18 @@ class Populator():
         # Add to search index
         self.add_to_index(fixed_results)
 
-        # Add to NDB datastrore
+        # Add to NDB datastore
         organisms = [self.make_organism(ID, result) for result in fixed_results]
-        ndb.put_multi(organisms)
+        self.add_to_ndb(organisms)
 
         return organisms
+
+    def add_to_ndb(self, organisms):
+        try:
+            ndb.put_multi(organisms)
+        except apiproxy_errors.OverQuotaError as message:
+            # Log the error.
+            logging.error(message)
 
     def select_results(self, results, rank_id, options):
         selected_results = []
@@ -193,12 +245,18 @@ class Populator():
         return selected_results
 
     def is_good_result(self, result, rank_id, options):
-        if result['key'] >= 1000 and not options['is_animal_or_plant_subgroup'] and 'vernacularName' not in result:
+        # We only keep species if they have a vernacular name, except for the first 1000, which are
+        # very important and sometimes do not have a common name
+        lacks_necessary_vernacular_name = (result['key'] >= 1000 and 'vernacularName' not in result)
+
+        # We keep animal and plants because they have interesting and popular children
+        if lacks_necessary_vernacular_name and not options['is_animal_or_plant_subgroup']:
             return False
 
         result_rank = result['rank']
 
         if not options['is_virus_subgroup']:
+            # Choose only direct children, because GBIF sometimes return children various taxons below
             return result_rank == ranks[rank_id]
         else:
             # Virus have strange classification. Sometimes the children are 2 or 3 ranks lower.
@@ -219,6 +277,7 @@ class Populator():
             values['authorship'] = result['authorship']
         if 'rank' in result:
             values['rank'] = result['rank']
+
         organism = Organism(id=str(result['key']), **values)
         return organism
 
@@ -231,9 +290,9 @@ class Populator():
         return search.Document(str(result['key']), fields)
 
     def get_fields(self, result):
-        scientificName = self.build_search_field(result['scientificName'])
+        scientific_name = self.build_search_field(result['scientificName'])
         fields = [
-            search.TextField(name='scientificName', value=scientificName)
+            search.TextField(name='scientificName', value=scientific_name)
         ]
 
         if 'canonicalName' in result:
@@ -268,11 +327,11 @@ class Populator():
         except TypeError:
             pass
 
-        suffixes = self.make_suffixed(name)
+        suffixes = self.make_suffixes(name)
         result = result + " " + suffixes
         return result
 
-    def make_suffixed(self, name):
+    def make_suffixes(self, name):
         if len(name) < 4:
             return ""
         else:
@@ -281,14 +340,16 @@ class Populator():
 
     def fix_results(self, results):
         for result in results:
-            if result['authorship']:
+            if 'authorship' in result and result['authorship']:
                 result['scientificName'] = self.get_name_without_authorship(result)
 
         return results
 
     def get_name_without_authorship(self, result):
         authorship = result['authorship']
-        scientificName = result['scientificName']
+        scientifc_name = result['scientificName']
 
-        return scientificName.replace(authorship, "")
+        return scientifc_name.replace(authorship, "")
+
+
 
