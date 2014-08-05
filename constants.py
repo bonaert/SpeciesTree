@@ -12,6 +12,7 @@ FISSIPEDIA = [732, 5]
 MUSTELIDAE = [5307, 6]  # badgers, weasels, martens, ferrets, minks and wolverines
 CANIDAE = [9701, 6]  # domestic dogs, wolves, foxes, jackals, coyotes,
 CANIS = [5219142, 7]  # Dogs and wolves
+CANIS_LUPUS = [5219173, 8] # Dogs and wolves
 VULPES = [5219234, 7]  # Foxes
 FELIDAE = [9703, 6]  # Cats
 FELIS = [2435022, 7]  # Familiar domestic cat and its closest wild relatives
