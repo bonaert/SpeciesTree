@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
@@ -7,10 +7,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name=viewport content="width=device-width, initial-scale=1">
     <title>Specio - Explore the tree of life</title>
-    <link rel="shortcut icon" href="image/favicon.ico" />
-    <meta name="description" content="With Specio, you can explore the tree of life, from the kingdoms to the species. Specio provides complete information and pictures of life, with an extensive knowledge base and an easy to use interface.">
+    <link rel="shortcut icon" href="image/favicon.ico"/>
+    <meta name="description"
+          content="With Specio, you can explore the tree of life, from the kingdoms to the species. Specio provides complete information and pictures of life, with an extensive knowledge base and an easy to use interface.">
+    <link rel="stylesheet" href="css/sbg.css">
     <link rel="stylesheet" href="semantic/css/semantic.min.css">
     <link rel="stylesheet" href="css/styles.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"/>
     <script>
         (function (i, s, o, g, r, a, m) {
             i['GoogleAnalyticsObject'] = r;
@@ -18,7 +21,7 @@
                 (i[r].q = i[r].q || []).push(arguments)
             }, i[r].l = 1 * new Date();
             a = s.createElement(o),
-            m = s.getElementsByTagName(o)[0];
+                    m = s.getElementsByTagName(o)[0];
             a.async = 1;
             a.src = g;
             m.parentNode.insertBefore(a, m)
@@ -30,89 +33,130 @@
 </head>
 
 <body>
-    <div class="ui large inverted menu" id="headerMenu">
-        <a class="item" href="index.html">
-            <i class="home icon"></i> Home
+<div class="ui large inverted menu" id="headerMenu">
+    <a class="item" href="index.html">
+        <i class="home icon"></i> Home
+    </a>
+    <a class="active item" href="about.html">
+        <i class="info letter icon"></i> About
+    </a>
+
+    <div class="right menu" style="margin-right: 10px !important">
+        <a class="item" href="https://github.com/harokb/speciesTree">
+            <i class="github icon"></i> Github
         </a>
-        <a class="active item" href="about.html">
-            <i class="info letter icon"></i> About
-        </a>
-        <div class="right menu" style="margin-right: 10px !important">
-            <a class="item" href="https://github.com/harokb/speciesTree">
-                <i class="github icon"></i> Github
+    </div>
+</div>
+
+<div class="ui bigLetters">
+    <div class="ui dividing header">
+        <div class="shareButtons">
+            <a class="sbg-button sbg-button-facebook" data-sbg-network="facebook"
+               data-sbg-url="http://species-explorer.appspot.com" data-sbg-title="Specio"
+               data-sbg-summary="Explore the tree of life" data-sbg-image="http://election.gv.my/assets/vote.png"
+               data-sbg-width="600" data-sbg-height="368">
+                <i class="sbg-button-icon fa fa-facebook"></i>
             </a>
+
+            <a class="sbg-button sbg-button-twitter" data-sbg-network="twitter" data-sbg-text="With Specio, explore the tree of life"
+               data-sbg-via="" data-sbg-hashtags="life, tree, specio" data-sbg-width="600" data-sbg-height="258">
+                <i class="sbg-button-icon fa fa-twitter"></i>
+            </a>
+
+            <a class="sbg-button sbg-button-google-plus" data-sbg-network="google-plus"
+               data-sbg-url="http://species-explorer.appspot.com" data-sbg-width="500" data-sbg-height="505">
+                <i class="sbg-button-icon fa fa-google-plus"></i>
+            </a>
+
+            <a class="sbg-button sbg-button-pinterest" data-sbg-network="pinterest"
+               data-sbg-url="http://species-explorer.appspot.com"
+               data-sbg-media="http://sharebuttongenerator.aakilfernandes.com/img/addButton.png"
+               data-sbg-description="Specio - Explore the tree of life" data-sbg-width="750" data-sbg-height="322">
+                <i class="sbg-button-icon fa fa-pinterest"></i>
+            </a>
+
+            <a class="sbg-button sbg-button-email" data-sbg-network="email"
+               data-sbg-subject="Specio - Explore the tree of life"
+               data-sbg-body="Explore the tree of life with Specio, at http://species-explorer.appspot.com.">
+                <i class="sbg-button-icon fa fa-envelope"></i>
+            </a>
+
+            <h1>What is Specio?</h1>
         </div>
     </div>
 
-    <div class="ui bigLetters">
-        <div class="ui dividing header">
-            <h2>What is Specio?</h2>
-        </div>
+    <p class="centered infoText">
+        With Specio, you can explore the tree of life, from the kingdoms down to the species. Specio provides you with
+        information and images about different groups of organisms and their evolutionary relationships.
+    </p>
 
-        <p class="centered infoText">
-            With Specio, you can explore the tree of life, from the kingdoms down to the species. Specio provides you with information and images about different groups of organisms and their evolutionary relationships.
-        </p>
+    <p class="centered infoText">
+        Starting with the root of all Life on Earth and moving out along diverging branches to individual species, the
+        structure of the tree of life illustrates the genetic connections between all living things. For each group and
+        species, you can find information and pictures coming from the Wikipedia database, ensuring extensiveness and
+        completeness. There are seven ranks in the tree of life: kingdom, phylum, class, order, family, genus, species.
+        Additionally, Domain, which is a level above kingdom, has become popular in recent years. For more information,
+        consult
+        <a href="http://en.wikipedia.org/wiki/Scientific_classification">Wikipedia</a>.
+    </p>
 
-        <p class="centered infoText">
-            Starting with the root of all Life on Earth and moving out along diverging branches to individual species, the structure of the tree of life illustrates the genetic connections between all living things. For each group and species, you can find information and pictures coming from the Wikipedia database, ensuring extensiveness and completeness. There are seven ranks in the tree of life: kingdom, phylum, class, order, family, genus, species. Additionally, Domain, which is a level above kingdom, has become popular in recent years. For more information, consult
-            <a href="http://en.wikipedia.org/wiki/Scientific_classification">Wikipedia</a>.
-        </p>
+    <img class="ui large image" src="image/realtree.png" alt="Tree of life - Carnivora">
 
-        <img class="ui large image" src="image/realtree.png" alt="Tree of life - Carnivora">
+    <p class="centered infoText">
+        Here are some good examples of familiar species to help you familiarize with the tree. Try finding them in the
+        tree!
+    </p>
 
-        <p class="centered infoText">
-            Here are some good examples of familiar species to help you familiarize with the tree. Try finding them in the tree!
-        </p>
+    <div class="centered">
+        <ul class="list" style="margin-top:20px;">
+            <li>
+                <div class="ui breadcrumb" style="margin-top: 20px; margin-bottom: 10px;">
+                    Human:&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a class="section">Animalia</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Chordates</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Mammals</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Primates</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Man like Primates</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Hominoids</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Human</a>
+                </div>
+            </li>
 
-        <div class="centered">
-            <ul class="list" style="margin-top:20px;">
-                <li>
-                    <div class="ui breadcrumb" style="margin-top: 20px; margin-bottom: 10px;">
-                        Human:&nbsp;&nbsp;&nbsp;&nbsp;
-                        <a class="section">Animalia</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Chordates</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Mammals</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Primates</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Man like Primates</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Hominoids</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Human</a>
-                    </div>
-                </li>
-
-                <li>
-                    <div class="ui breadcrumb" style="margin-top: 0px;">
-                        Pine trees:
-                        <a class="section">Plantae</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Pinophyta</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Pinophyta</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Pinales</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Pine family</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">Hybrid pine</a>
-                        <i class="right arrow icon divider"></i>
-                        <a class="section">...</a>
-                    </div>
-                </li>
-            </ul>
+            <li>
+                <div class="ui breadcrumb" style="margin-top: 0px;">
+                    Pine trees:
+                    <a class="section">Plantae</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Pinophyta</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Pinophyta</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Pinales</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Pine family</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">Hybrid pine</a>
+                    <i class="right arrow icon divider"></i>
+                    <a class="section">...</a>
+                </div>
+            </li>
+        </ul>
 
 
-        </div>
-
-
-        <img class="ui image" src="image/treeexmaple.png" alt="Tree of life - Carnivora">
     </div>
 
 
+    <img class="ui image" src="image/treeexmaple.png" alt="Tree of life - Carnivora">
+</div>
+
+<script src="js/lib/sbg.js" type="application/javascript"></script>
+<script>sbg();</script>
 </body>
 
 </html>
