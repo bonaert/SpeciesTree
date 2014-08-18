@@ -21,10 +21,20 @@ fix_path()
 import credentials
 from populate import Organism
 
+DEBUGGING = False
+
+
 ranks = ['KINGDOM', 'PHYLUM', 'CLASS', 'ORDER', 'FAMILY', 'GENUS', 'SPECIES']
 INDEX = search.Index(name="organisms")
 
-file_names = {'about.html', 'index.html', 'sitemap.xml', 'google7e0693b4ccda33f7.html'}
+routes = {'about.html': 'about.html',
+          'index.html': 'index.html',
+          '': 'index.html',
+          'sitemap.xml': 'sitemap.xml',
+          'google7e0693b4ccda33f7.html': 'google7e0693b4ccda33f7.html'}
+
+file_names = {'about.html', 'index.html', 'sitemap.xml', 'google7e0693b4ccda33f7.html', '404.html'}
+
 
 
 def get_file(filename):
@@ -36,7 +46,7 @@ def get_file(filename):
 
 def get_from_cache(filename):
     cached_value = memcache.get(filename)
-    if cached_value is not None:
+    if not DEBUGGING and cached_value is not None:
         return cached_value
     else:
         value = file(filename).read()
@@ -118,13 +128,17 @@ class DeleteDataHandler(webapp2.RequestHandler):
 
 
 class MainHandler(webapp2.RequestHandler):
-    def get(self, filename):
-        if filename in file_names:
-            if filename == 'sitemap.xml':
-                self.response.headers["Content-Type"] = "application/xml"
-            self.response.write(get_file(filename))
+    def get(self, uri):
+        logging.info(uri)
+        if uri in routes:
+            filename = routes[uri]
         else:
-            self.response.write(get_file('index.html'))
+            filename = '404.html'
+
+        if filename == 'sitemap.xml':
+            self.response.headers["Content-Type"] = "application/xml"
+
+        self.response.write(get_file(filename))
 
 
 def organism_to_dict(organism):
