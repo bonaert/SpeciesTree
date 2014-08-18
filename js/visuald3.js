@@ -16,7 +16,7 @@ var heightBetweenChildren = 100;
 
 
 function getName(data) {
-    return data.vernacularName || data.canonicalName || data.scientificName || "Error: could not find name";
+    return data.vernacularName || data.canonicalName || data.scientificName;
 }
 
 function getScientificName(data) {
@@ -56,6 +56,7 @@ function SpeciesGraph(tree) {
         self.svgSelection = self.speciesContainerSelection.append("svg")
             .attr('width', width)
             .attr('height', self.height);
+
     };
 
     this.resizeSvg = function (numChildren) {
@@ -127,11 +128,12 @@ function SpeciesGraph(tree) {
             .attr('id', 'rootButton');
     };
 
-    this.createRootButton = function (rootCircleDivSelection) {
+    this.createRootButton = function (rootCircleDivSelection, data) {
         return rootCircleDivSelection
             .append('div')
             .on("click", function () {
-                self.page.expandSuperTree();
+                var parent = self.tree.getParent();
+                self.page.showChildren(parent);
             });
     };
 
@@ -272,7 +274,7 @@ function SpeciesGraph(tree) {
             return toTitleCase(text);
         }).style('width', function (data) {
             var text = getName(data);
-            var width = Math.max(200, text.length * 9 + 100);
+            var width = Math.max(200, text.length * 12 + 100);
             return width.toString() + 'px';
         });
 
@@ -381,6 +383,12 @@ function InformationPane() {
     };
 
     this.showInformation = function (data, scrollToInformationPanel) {
+        // Do not show information for life
+        // Todo: why not?
+        if (data.id === 0) {
+            return;
+        }
+
         self.resetInformationPanel();
         self.showWikipediaInformation(data, scrollToInformationPanel);
     };
@@ -725,6 +733,7 @@ function Page() {
             self.adjustPadding();
         }
 
+
     };
 
     this.adjustPadding = function () {
@@ -733,9 +742,31 @@ function Page() {
     };
 
     this.start = function () {
+        self.updateState({id: 0}, 0);
         self.speciesGraph.addRoot();
         self.tree.fetchBasicChildrenInformation(function (children) {
             self.speciesGraph.addChildren(children);
+            showTour();
+        });
+
+        // Bind to StateChange Event
+        History.Adapter.bind(window, 'statechange', function () { // Note: We are using statechange instead of popstate
+            var state = History.getState(); // Note: We are using History.getState() instead of event.state
+            var data = state.data;
+
+
+            // When we are at the root, we should go to the previous page, exiting our website
+            if (_.isUndefined(data.id)) {
+                History.back();
+                return;
+            }
+
+            // When we change with button, we don't want to repeat the ShowChildren method
+            // When we use the back button, this will active, otherwise not, because the tree
+            // ID will already be correct and there is no need to update the children
+            if (data.id !== self.tree.rootID) {
+                self.showChildren(data);
+            }
         });
     };
 
@@ -743,25 +774,63 @@ function Page() {
         self.informationPane.showInformation(data, scrollToInformationPanel)
     };
 
-    this.showChildren = function (data) {
-        if (self.tree.isAtSubSpeciesLevel()) {
-            console.info("Reached sub species level. Can't go down.");
-            return;
+    this.updateState = function (data, ID) {
+        var name = getName(data);
+        var title;
+        if (_.isUndefined(name)) {
+            title = "Specio - Explore the tree of life";
+        } else {
+            title = "Specio - " + toTitleCase(getName(data));
         }
 
+        var previousState = self.getPreviousState();
+        if (previousState.data.id === ID) {
+            History.back();
+        } else {
+            History.pushState(data, title, "?id=" + ID.toString());
+        }
+
+    };
+
+    this.adjustHistory = function (data, ID) {
+        var state = History.getState();
+        var isCorrectState = state.data.id === self.tree.rootID;
+        if (!isCorrectState) {
+            self.updateState(data, ID);
+        }
+    };
+
+    this.getPreviousState = function () {
+        var currentIndex = History.getCurrentIndex();
+        return History.getStateByIndex(currentIndex - 1);
+    };
+
+
+    this.showChildren = function (data) {
         var ID = data.id;
-        var informationPaneDatum = self.informationPane.getInformationPaneDatum();
-        var currentSpeciesID = informationPaneDatum && informationPaneDatum[0],
-            wikipediaHasInformation = informationPaneDatum[1];
-        if (currentSpeciesID !== ID || !wikipediaHasInformation) {
-            self.scrollToTop();
-            self.informationPane.hideSidebar();
+        console.log(History.getCurrentIndex());
+
+        if (self.tree.isParent(ID)) {
+            self.expandSuperTree(data, ID);
+            return;
         }
 
         if (self.tree.isChild(ID)) {
             self.tree.setRootToChild(ID);
         } else {
             self.tree.setRoot(ID, data);
+        }
+
+        // History state should always be updated after correcting the root
+        self.updateState(data, ID);
+
+
+        var informationPaneDatum = self.informationPane.getInformationPaneDatum();
+        var currentSpeciesID = informationPaneDatum && informationPaneDatum[0],
+            wikipediaHasInformation = informationPaneDatum[1];
+        if (currentSpeciesID !== ID || !wikipediaHasInformation) {
+            self.scrollToTop();
+            self.informationPane.hideSidebar();
         }
 
         self.speciesGraph.addRoot();
@@ -772,7 +841,7 @@ function Page() {
         });
     };
 
-    this.expandSuperTree = function () {
+    this.expandSuperTree = function (data, ID) {
         if (self.tree.isAtKingdomLevel()) {
             console.info("Reached kingdom level. Can't go up.");
             return;
@@ -783,6 +852,10 @@ function Page() {
         self.scrollToTop();
 
         self.tree.setRootToParent();
+
+        // History state should always be updated after correcting the root
+        self.adjustHistory(data, ID);
+
 
         self.speciesGraph.addRoot();
 
@@ -810,4 +883,40 @@ var page = new Page();
 page.setUp();
 page.start();
 
+function showTour() {
+    var introguide = introJs();
 
+    introguide.setOptions({
+        steps: [
+            {
+                //element: '#pageHeader',
+                intro: 'This guided tour will explain the Specio interface.' +
+                    '<br><br>Use the arrow keys for navigation or hit ESC to exit the tour immediately.',
+                position: 'bottom'
+            },
+            {
+                element: '.ui.green.icon',
+                intro: 'Click here to see information about a group (e.g. See info about Animals).',
+                position: 'left'
+            },
+            {
+                element: '.ui.blue.labeled.icon',
+                intro: "Click here to go to a subgroup (e.g. Go from the Life group to Animals group).",
+                position: 'top'
+            },
+            {
+                element: '#searchDiv',
+                intro: 'You can also search for a specific species. Try Human!<br><br>' +
+                    '<div style="color: lightcoral">The database is still incomplete, so there may be a lack of results.</div>',
+                position: 'bottom'
+            },
+            {
+                //element: '#pageHeader',
+                intro: "That's was it (it's very simple)! Enjoy the site.",
+                position: 'bottom'
+            }
+        ]
+    });
+
+    introguide.start();
+}
