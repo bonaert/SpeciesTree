@@ -40,6 +40,18 @@ function Tree() {
         }
     };
 
+    this.isParent = function (ID) {
+        if (self.parentIDs.length === 0) {
+            return false;
+        } else {
+            return _.last(self.parentIDs) === ID;
+        }
+    };
+
+    this.getParent = function (){
+        return _.last(self.parentInfo);
+    };
+
     this.setRootToChild = function (childID) {
         this.parentIDs.push(this.rootID);
         this.parentInfo.push(this.getBasicInformation(this.rootID));
@@ -129,7 +141,7 @@ function Tree() {
         this.basicChildrenInformation = {};
         this.childrenDescription = {};
         this.childrenIDs = [];
-        this.level = self.get_level(root.rank);
+        this.level = self.get_level(root);
         this.updateParents();
 
         // Add flag when where stepping into virus subtaxons
@@ -142,11 +154,22 @@ function Tree() {
         return _.contains(self.childrenIDs, id);
     };
 
-    this.get_level = function (rank) {
-        return self.levels.indexOf(rank.toLowerCase()) + 1;
+    this.get_level = function (root) {
+        if (root.id === 0) {
+            return 1;
+        } else {
+            var rank = root.rank;
+            return self.levels.indexOf(rank.toLowerCase()) + 1;
+        }
     };
 
     this.updateParents = function () {
+        if (self.rootID === 0){
+            self.parentIDs = [];
+            self.parentInfo = [];
+            return;
+        }
+
         self.parentIDs = [0];
         self.parentInfo = [
             {
@@ -154,6 +177,7 @@ function Tree() {
                 'scientificName': 'Life'
             }
         ];
+
 
         self.gbif.getParents(self.rootID, function (parents) {
             _.each(parents, function (parent) {
