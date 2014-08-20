@@ -619,7 +619,8 @@ function SearchZone() {
 
     this.sortSearchResults = function (results) {
         return results.sort(function (a, b) {
-            var aID = self.getRankID(a), bID = self.getRankID(b);
+            var aID = self.getRankID(a),
+                bID = self.getRankID(b);
             if (aID > bID) return 1;
             else if (aID < bID) return -1;
             else return 0
@@ -659,8 +660,7 @@ function SearchZone() {
         var levels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
         if (result.rank) {
             return levels.indexOf(result.rank.toLowerCase()) + 1;
-        }
-        else {
+        } else {
             for (var i = levels.length - 1; i >= 0; i--) {
                 if (_.has(result, levels[i])) {
                     return i + 1;
@@ -742,7 +742,9 @@ function Page() {
     };
 
     this.start = function () {
-        self.updateState({id: 0}, 0);
+        self.updateState({
+            id: 0
+        }, 0);
         self.speciesGraph.addRoot();
         self.tree.fetchBasicChildrenInformation(function (children) {
             self.speciesGraph.addChildren(children);
@@ -884,6 +886,13 @@ page.setUp();
 page.start();
 
 function showTour() {
+    if (!hasDoneTour()) {
+        startTour();
+        setTourDoneFlag();
+    }
+}
+
+function startTour() {
     var introguide = introJs();
 
     introguide.setOptions({
@@ -911,6 +920,11 @@ function showTour() {
                 position: 'bottom'
             },
             {
+                element: '.help.icon',
+                intro: "To see the tour again, press this button.",
+                position: 'bottom'
+            },
+            {
                 //element: '#pageHeader',
                 intro: "That's was it (it's very simple)! Enjoy the site.",
                 position: 'bottom'
@@ -919,4 +933,12 @@ function showTour() {
     });
 
     introguide.start();
+}
+
+function hasDoneTour() {
+    return localStorage.getItem('species-explorer-tour-is-done') === 'true';
+}
+
+function setTourDoneFlag() {
+    localStorage.setItem('species-explorer-tour-is-done', 'true')
 }
