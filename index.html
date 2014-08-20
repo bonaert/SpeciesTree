@@ -7,14 +7,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name=viewport content="width=device-width, initial-scale=1">
     <title>Specio - Explore the tree of life</title>
-    <link rel="shortcut icon" href="image/favicon.ico"/>
-    <meta name="description"
-          content="With Specio, you can explore the tree of life, from the kingdoms to the species. Specio provides complete information and pictures of life, with an extensive knowledge base and an easy to use interface.">
+    <link rel="shortcut icon" href="image/favicon.ico" />
+    <meta name="description" content="With Specio, you can explore the tree of life, from the kingdoms to the species. Specio provides complete information and pictures of life, with an extensive knowledge base and an easy to use interface.">
     <link rel="stylesheet" href="css/sbg.css">
     <link rel="stylesheet" href="semantic/css/semantic.min.css">
     <link rel="stylesheet" href="css/styles.min.css">
     <link rel="stylesheet" href="css/introjs.css">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" />
     <script>
         (function (i, s, o, g, r, a, m) {
             i['GoogleAnalyticsObject'] = r;
@@ -22,7 +21,7 @@
                 (i[r].q = i[r].q || []).push(arguments)
             }, i[r].l = 1 * new Date();
             a = s.createElement(o),
-                    m = s.getElementsByTagName(o)[0];
+            m = s.getElementsByTagName(o)[0];
             a.async = 1;
             a.src = g;
             m.parentNode.insertBefore(a, m)
@@ -34,84 +33,86 @@
 </head>
 
 <body>
-<div class="ui large inverted menu" id="headerMenu">
-    <a class="active item" href="index.html">
-        <i class="home icon"></i> Home
-    </a>
-    <a class="item" href="about.html">
-        <i class="info letter icon"></i> About
-    </a>
-
-    <div class="right menu" style="margin-right: 10px !important">
-        <a class="item" href="https://github.com/harokb/speciesTree">
-            <i class="github icon"></i> Github
+    <div class="ui large inverted menu" id="headerMenu">
+        <a class="active item" href="index.html">
+            <i class="home icon"></i> Home
         </a>
-    </div>
-</div>
+        <a class="item" href="about.html">
+            <i class="info letter icon"></i> About
+        </a>
 
-<div id="contentDiv">
-    <div class="ui dividing header">
-        <div class="shareButtons">
-            <a class="sbg-button sbg-button-facebook" data-sbg-network="facebook"
-               data-sbg-url="http://species-explorer.appspot.com" data-sbg-title="Specio"
-               data-sbg-summary="Explore the tree of life" data-sbg-image="http://election.gv.my/assets/vote.png"
-               data-sbg-width="600" data-sbg-height="368">
-                <i class="sbg-button-icon fa fa-facebook"></i>
+
+        <a class="item" onclick="startTour();" id="tourIcon">
+            <i class="help icon"></i> Tour
+        </a>
+
+
+        <div class="right menu" style="margin-right: 10px !important">
+            <a class="item" href="https://github.com/harokb/speciesTree">
+                <i class="github icon"></i> Github
             </a>
-
-            <a class="sbg-button sbg-button-twitter" data-sbg-network="twitter" data-sbg-text="Explore the tree of life"
-               data-sbg-via="" data-sbg-hashtags="life, tree, specio" data-sbg-width="600" data-sbg-height="258">
-                <i class="sbg-button-icon fa fa-twitter"></i>
-            </a>
-
-            <a class="sbg-button sbg-button-google-plus" data-sbg-network="google-plus"
-               data-sbg-url="http://species-explorer.appspot.com" data-sbg-width="500" data-sbg-height="505">
-                <i class="sbg-button-icon fa fa-google-plus"></i>
-            </a>
-
-            <a class="sbg-button sbg-button-pinterest" data-sbg-network="pinterest"
-               data-sbg-url="http://species-explorer.appspot.com"
-               data-sbg-media="http://sharebuttongenerator.aakilfernandes.com/img/addButton.png"
-               data-sbg-description="Specio - Explore the tree of life" data-sbg-width="750" data-sbg-height="322">
-                <i class="sbg-button-icon fa fa-pinterest"></i>
-            </a>
-
-            <a class="sbg-button sbg-button-email" data-sbg-network="email"
-               data-sbg-subject="Specio - Explore the tree of life"
-               data-sbg-body="Explore the tree of life with Specio, at http://species-explorer.appspot.com.">
-                <i class="sbg-button-icon fa fa-envelope"></i>
-            </a>
-
-            <h1 id="pageHeader">Species Graph</h1>
         </div>
     </div>
 
+    <div id="contentDiv">
+        <div class="ui dividing header">
+            <div class="shareButtons">
+                <a class="sbg-button sbg-button-facebook" data-sbg-network="facebook" data-sbg-url="http://species-explorer.appspot.com" data-sbg-title="Specio" data-sbg-summary="Explore the tree of life" data-sbg-image="http://election.gv.my/assets/vote.png" data-sbg-width="600" data-sbg-height="368">
+                    <i class="sbg-button-icon fa fa-facebook"></i>
+                </a>
 
-    <div class="ui icon input" id="searchDiv">
-        <input type="text" placeholder="Search..." id="searchInput">
-        <i class="search icon" id="searchIcon"></i>
+                <a class="sbg-button sbg-button-twitter" data-sbg-network="twitter" data-sbg-text="Explore the tree of life" data-sbg-via="" data-sbg-hashtags="life, tree, specio" data-sbg-width="600" data-sbg-height="258">
+                    <i class="sbg-button-icon fa fa-twitter"></i>
+                </a>
+
+                <a class="sbg-button sbg-button-google-plus" data-sbg-network="google-plus" data-sbg-url="http://species-explorer.appspot.com" data-sbg-width="500" data-sbg-height="505">
+                    <i class="sbg-button-icon fa fa-google-plus"></i>
+                </a>
+
+                <a class="sbg-button sbg-button-pinterest" data-sbg-network="pinterest" data-sbg-url="http://species-explorer.appspot.com" data-sbg-media="http://sharebuttongenerator.aakilfernandes.com/img/addButton.png" data-sbg-description="Specio - Explore the tree of life" data-sbg-width="750" data-sbg-height="322">
+                    <i class="sbg-button-icon fa fa-pinterest"></i>
+                </a>
+
+                <a class="sbg-button sbg-button-email" data-sbg-network="email" data-sbg-subject="Specio - Explore the tree of life" data-sbg-body="Explore the tree of life with Specio, at http://species-explorer.appspot.com.">
+                    <i class="sbg-button-icon fa fa-envelope"></i>
+                </a>
+
+
+                <h1 id="pageHeader">Species Graph</h1>
+
+
+
+            </div>
+        </div>
+
+
+        <div class="ui icon input" id="searchDiv">
+            <input type="text" placeholder="Search..." id="searchInput">
+            <i class="search icon" id="searchIcon"></i>
+        </div>
+        <div id="searchResults"></div>
+
+        <!--    <div id="infoContainer"></div>-->
+        <div id="speciesContainer"></div>
+
     </div>
-    <div id="searchResults"></div>
 
-    <!--    <div id="infoContainer"></div>-->
-    <div id="speciesContainer"></div>
+    <script src="js/lib/d3.min.js" type="application/javascript"></script>
+    <script src="js/lib/jquery.min.js" type="application/javascript"></script>
+    <script src="js/lib/jquery.history.js" type="application/javascript"></script>
+    <script src="js/lib/underscore.min.js" type="application/javascript"></script>
+    <script src="js/lib/utils.js" type="application/javascript"></script>
+    <script src="semantic/javascript/semantic.min.js" type="application/javascript"></script>
+    <script src="js/wikipedia.js" type="application/javascript"></script>
+    <script src="js/gbif.js" type="application/javascript"></script>
+    <script src="js/tree.js" type="application/javascript"></script>
+    <script src="js/lib/intro.js" type="application/javascript"></script>
+    <script src="js/visuald3.js" type="application/javascript"></script>
 
-</div>
-
-<script src="js/lib/d3.min.js" type="application/javascript"></script>
-<script src="js/lib/jquery.min.js" type="application/javascript"></script>
-<script src="js/lib/jquery.history.js" type="application/javascript"></script>
-<script src="js/lib/underscore.min.js" type="application/javascript"></script>
-<script src="js/lib/utils.js" type="application/javascript"></script>
-<script src="semantic/javascript/semantic.min.js" type="application/javascript"></script>
-<script src="js/wikipedia.js" type="application/javascript"></script>
-<script src="js/gbif.js" type="application/javascript"></script>
-<script src="js/tree.js" type="application/javascript"></script>
-<script src="js/lib/intro.js" type="application/javascript"></script>
-<script src="js/visuald3.js" type="application/javascript"></script>
-
-<script src="js/lib/sbg.js" type="application/javascript"></script>
-<script>sbg();</script>
+    <script src="js/lib/sbg.js" type="application/javascript"></script>
+    <script>
+        sbg();
+    </script>
 
 
 
