@@ -28,28 +28,11 @@ a {
 }
 img {
     background: transparent;
-    border: 10px solid rgba(0, 0, 0, 0.12);
-    border-radius: 4px;
+    border: 2px solid rgb(47, 46, 46);
+    border-radius: 1px;
     display: block;
-    margin: 1.3em auto;
+    margin: 0 auto;
     max-width: 95%;
-    -webkit-animation: colorize 2s cubic-bezier(0, 0, .78, .36) 1;
-}
-@keyframes colorize {
-    0% {
-        -webkit-filter: grayscale(100%);
-    }
-    100% {
-        -webkit-filter: grayscale(0%);
-    }
-}
-@-webkit-keyframes colorize {
-    0% {
-        -webkit-filter: grayscale(100%);
-    }
-    100% {
-        -webkit-filter: grayscale(0%);
-    }
 }
 b {
     font-weight: bold;
