@@ -920,7 +920,7 @@ function startTour() {
                 position: 'bottom'
             },
             {
-                element: '.help.icon',
+                element: '#tourIcon',
                 intro: "To see the tour again, press this button.",
                 position: 'bottom'
             },
