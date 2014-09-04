@@ -32,7 +32,7 @@ img {
     border-radius: 1px;
     display: block;
     margin: 0 auto;
-    max-width: 95%;
+    max-width: 95% !important;
 }
 b {
     font-weight: bold;
