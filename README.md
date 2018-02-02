@@ -9,12 +9,19 @@ There are seven ranks in the tree of life: kingdom, phylum, class, order, family
 
 # [See it now!](http://www.species-explorer.appspot.com/)
 
-
 ![Latest Preview](https://raw.githubusercontent.com/harokb/SpeciesTree/master/newestpreview.png)
 
+## Tech behind it
+
+**Back-end**: Google App Engine
+
+**Front-end**: d3.js (for the tree), Semantic UI (CSS framework)
+
+**Data Source**: Global Biodiversity Information Facility (tree), Wikipedia (detailed information)
+
+## Old versions
 
 The UI has evolved quite a bit, here's some of the old versions for comparison's sake:
-
 
 Old Version
 ==============
